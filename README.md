@@ -50,7 +50,7 @@ The Lamport and FO demos run a real SHA-256 implemented in the page (verified ag
 /all/             the complete page, as before
 ```
 
-Each generated page carries the same stylesheet and script; every demo module no-ops when its elements are absent, so nothing needs conditional bundling. The generator rewrites `#anchors` to point at whichever page now holds them, and adds the lesson bar and prev/next links. Rebuild locally with `node build.js` (output lands in `dist/`, which is gitignored).
+The stylesheet and script are written once to `assets/` with content-hashed filenames and shared by every page, so moving between lessons costs a few kilobytes rather than re-downloading the whole thing. Every demo module no-ops when its elements are absent, so nothing needs conditional bundling. The generator rewrites `#anchors` to point at whichever page now holds them, and adds the lesson bar and prev/next links. Rebuild locally with `node build.js` (output lands in `dist/`, which is gitignored).
 
 ## Build
 

@@ -12,6 +12,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'index.html');
@@ -125,7 +126,6 @@ function pageHead(title, desc, canonical) {
 }
 
 const EXTRA_CSS = `
-<style>
 .lessonbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:0 0 1.5rem;padding:.5rem .75rem;
   background:var(--paper);border:1px solid var(--rule);border-radius:10px;font-size:.86rem}
 .lessonbar ul{display:flex;gap:.25rem;list-style:none;margin:0;padding:0}
@@ -148,19 +148,33 @@ const EXTRA_CSS = `
 .lessoncard:hover{border-color:var(--violet)}
 .lessoncard b{display:block;font-size:1rem;margin-bottom:.25rem}
 .lessoncard .meta{font-size:.78rem;color:var(--ink-2);margin-top:.45rem}
-.lessoncard p{margin:0;font-size:.86rem;color:var(--ink-2);line-height:1.5}
-</style>`;
+.lessoncard p{margin:0;font-size:.86rem;color:var(--ink-2);line-height:1.5}`;
+
+/* One stylesheet and one script for the whole site, content-hashed so a change
+   busts the cache and an unchanged deploy keeps it. 88% of a short lesson page
+   was otherwise a duplicate copy of these two. */
+const sharedCss = head.match(/<style>([\s\S]*?)<\/style>/)[1] + '\n' + EXTRA_CSS;
+const sharedJs = scripts.replace(/<\/?script>/g, '');
+const hash = (t) => crypto.createHash('sha256').update(t).digest('hex').slice(0, 8);
+const CSS_NAME = 'notes.' + hash(sharedCss) + '.css';
+const JS_NAME = 'notes.' + hash(sharedJs) + '.js';
 
 function page(opts) {
-  return pageHead(opts.title, opts.desc, opts.canonical) + EXTRA_CSS + '\n</head>\n<body>\n<div class="wrap">\n' +
+  const up = opts.page === '' ? '' : '../';
+  const headNoStyle = pageHead(opts.title, opts.desc, opts.canonical)
+    .replace(/<style>[\s\S]*?<\/style>/, '<link rel="stylesheet" href="' + up + 'assets/' + CSS_NAME + '">');
+  return headNoStyle + '\n</head>\n<body>\n<div class="wrap">\n' +
     defs + '\n' + themer + '\n' + opts.body + '\n' + (footer ? rewriteAnchors(footer, opts.page) : '') +
-    '\n</div>\n' + scripts + '\n</body>\n</html>\n';
+    '\n</div>\n<script src="' + up + 'assets/' + JS_NAME + '"></script>\n</body>\n</html>\n';
 }
 
 /* ---------- write ---------- */
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, '.nojekyll'), '');
+fs.mkdirSync(path.join(OUT, 'assets'), { recursive: true });
+fs.writeFileSync(path.join(OUT, 'assets', CSS_NAME), sharedCss);
+fs.writeFileSync(path.join(OUT, 'assets', JS_NAME), sharedJs);
 
 // hub
 const heroForHub = rewriteAnchors(hero, '');
@@ -216,4 +230,5 @@ fs.writeFileSync(path.join(OUT, 'all', 'index.html'), page({
 const count = (d) => fs.readdirSync(d, { withFileTypes: true })
   .reduce((n, e) => n + (e.isDirectory() ? count(path.join(d, e.name)) : (e.name.endsWith('.html') ? 1 : 0)), 0);
 console.log('dist/: ' + count(OUT) + ' pages — hub, ' + lessons.length + ' lessons, full page');
+console.log('  shared assets/' + CSS_NAME + ' (' + sharedCss.length + ' B) + assets/' + JS_NAME + ' (' + sharedJs.length + ' B), fetched once for the whole site');
 lessons.forEach(L => console.log('  ' + L.slug + '/  ' + L.sections.length + ' sections, ' + L.figures + ' figures, ' + L.demos + ' demos — ' + L.title));
