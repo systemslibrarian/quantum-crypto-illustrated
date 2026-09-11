@@ -514,7 +514,7 @@ svg .white{fill:var(--paper)}
 
 <h3>Three kinds of mapping</h3>
 <figure>
-<svg viewBox="0 0 720 230" role="img" aria-label="Arrow diagrams for injective, surjective, and bijective functions between sets A and B">
+<svg viewBox="0 0 720 244" role="img" aria-label="Arrow diagrams for injective, surjective, and bijective functions between sets A and B">
   <defs><marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
   <!-- injective: A 3 dots -> B 4 dots, one B unused -->
   <g transform="translate(20,20)">
@@ -703,7 +703,7 @@ svg .white{fill:var(--paper)}
   <text x="620" y="165" text-anchor="middle" font-size="11" class="dim">NTRU lattice</text>
   <text x="470" y="210" text-anchor="middle" font-size="11" class="dim">"Dilithium": the Star Trek crystal. Any asymmetric scheme can sign,</text>
   <text x="470" y="228" text-anchor="middle" font-size="11" class="dim">but these three were designed and tuned for signatures specifically.</text>
-  <text x="470" y="262" text-anchor="middle" font-size="12" class="dim">FrodoKEM reached round 3, was not selected, and is used by the German government.</text>
+  <text x="470" y="262" text-anchor="middle" font-size="11" class="dim">FrodoKEM reached round 3, was not selected, and is used by the German government.</text>
 </svg>
 <figcaption>The course's advice: if you cannot analyze algorithms yourself, default to the NIST standards. The names changed at standardization; you will see both in the literature.</figcaption>
 </figure>
@@ -1059,7 +1059,7 @@ svg .white{fill:var(--paper)}
 <p>AES-256 is cleared for classified material, so Kyber-1024 is the "whatever you need" setting — and the one CNSA 2.0 mandates (lesson 3). The course's practical takeaway: ask a vendor which parameter set and which standards they implement; you don't need the math to read this table against their answer.</p>
 
 <figure>
-<svg viewBox="0 0 720 250" role="img" aria-label="Module lattice: one fixed ring of degree 256, arranged as a k by k matrix of ring elements; k equals 2, 3 or 4 selects the security level without changing the ring">
+<svg viewBox="0 0 720 268" role="img" aria-label="Module lattice: one fixed ring of degree 256, arranged as a k by k matrix of ring elements; k equals 2, 3 or 4 selects the security level without changing the ring">
   <text x="20" y="24" font-size="14" font-weight="600">One ring, three sizes — why changing security level needs no re-implementation</text>
   <text x="20" y="44" font-size="12" class="dim">Every cell is a polynomial in the same ring ℤ₃₃₂₉[x]/(x²⁵⁶ + 1). Only the matrix shape changes.</text>
   <g transform="translate(40,70)">
@@ -1083,7 +1083,7 @@ svg .white{fill:var(--paper)}
     <text x="0" y="50">· add / multiply in ℤ_q</text>
     <text x="0" y="68">· the NTT on the ring</text>
     <text x="0" y="100">polynomial multiply is</text>
-    <text x="0" y="116">the costly step; the NTT</text>
+    <text x="0" y="116">the costly step; NTT</text>
     <text x="0" y="132">makes it fast, once</text>
   </g>
 </svg>
@@ -1300,7 +1300,7 @@ svg .white{fill:var(--paper)}
   <g transform="translate(370,15)">
     <rect width="330" height="145" rx="12" class="tb"/>
     <text x="14" y="26" font-size="14" font-weight="600">Code-based</text>
-    <text x="14" y="46" font-size="11" class="dim">hard problem: decode a general linear error-correcting code</text>
+    <text x="14" y="46" font-size="11" class="dim">hard problem: decode a random linear code</text>
     <g font-size="12">
       <text x="14" y="76">McEliece 1978</text><rect x="200" y="64" width="120" height="18" rx="9" class="tb"/><text x="260" y="77" text-anchor="middle" font-size="10" class="t" font-weight="600">oldest PQ · NIST alt.</text>
       <text x="14" y="100">Niederreiter 1986</text><rect x="200" y="88" width="120" height="18" rx="9" class="ab"/><text x="260" y="101" text-anchor="middle" font-size="10" class="a" font-weight="600">faster dual form</text>
@@ -1408,7 +1408,7 @@ svg .white{fill:var(--paper)}
 <figure>
 <svg viewBox="0 0 720 120" role="img" aria-label="SWIFFT pipeline: message split into m polynomials, FFT of each, pointwise multiply by fixed coefficients, inverse FFT, sum and output bits">
   <g font-size="11">
-    <rect x="20" y="30" width="120" height="50" rx="8" class="paper" stroke="var(--rule)"/><text x="80" y="52" text-anchor="middle" font-weight="600">message</text><text x="80" y="68" text-anchor="middle" class="dim">→ m polynomials pᵢ ∈ R</text>
+    <rect x="20" y="30" width="120" height="50" rx="8" class="paper" stroke="var(--rule)"/><text x="80" y="52" text-anchor="middle" font-weight="600">message</text><text x="80" y="68" text-anchor="middle" class="dim">→ m polynomials pᵢ</text>
     <path d="M145 55 H165" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
     <rect x="170" y="30" width="110" height="50" rx="8" class="vb"/><text x="225" y="52" text-anchor="middle" font-weight="600">FFT each pᵢ</text><text x="225" y="68" text-anchor="middle" class="dim">to frequency domain</text>
     <path d="M285 55 H305" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
