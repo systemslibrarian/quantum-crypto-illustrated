@@ -1551,6 +1551,8 @@ svg .white{fill:var(--paper)}
 
 <script>
 (function(){
+  function stat(v,l){ return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'; }
+
   // mod-5 number line ticks
   var g=document.getElementById('ticks'); if(g){
     for(var i=0;i<=15;i++){
@@ -1570,6 +1572,8 @@ svg .white{fill:var(--paper)}
   }
 
   // RSA playground
+  (function(){
+  if(!document.getElementById('rsa-out')) return;   // not on this page
   function isPrime(n){ if(n<2)return false; for(var i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
   function gcd(a,b){ while(b){ var t=a%b; a=b; b=t;} return a; }
   function modpow(b,e,m){ b=BigInt(b); e=BigInt(e); m=BigInt(m); var r=1n; b%=m; while(e>0n){ if(e&1n) r=r*b%m; b=b*b%m; e>>=1n;} return r; }
@@ -1583,7 +1587,6 @@ svg .white{fill:var(--paper)}
     return ((old_s%m)+m)%m;
   }
   var ids=['p','q','e','msg']; var out=document.getElementById('rsa-out'); var note=document.getElementById('rsa-note');
-  function stat(v,l){ return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'; }
   function run(){
     var p=+document.getElementById('p').value, q=+document.getElementById('q').value, e=+document.getElementById('e').value, m=+document.getElementById('msg').value;
     var err=[];
@@ -1598,6 +1601,7 @@ svg .white{fill:var(--paper)}
   }
   ids.forEach(function(id){ document.getElementById(id).addEventListener('input',run); });
   run();
+  })();
 
   // lattice dots
   function dots(id){ var g=document.getElementById(id); if(!g) return; var ns='http://www.w3.org/2000/svg';
@@ -1605,6 +1609,8 @@ svg .white{fill:var(--paper)}
   dots('lat1'); dots('lat2');
 
   // LWE playground
+  (function(){
+  if(!document.getElementById('lwe-out')) return;   // not on this page
   var q=23, s=[4,7], pub=[[[2,3],7],[[5,1],3],[[3,6],10],[[1,4],7]];
   var bit=0; var lout=document.getElementById('lwe-out');
   function lwe(){
@@ -1619,6 +1625,7 @@ svg .white{fill:var(--paper)}
   }
   Array.prototype.forEach.call(document.querySelectorAll('.bitbtn'),function(b){ b.addEventListener('click',function(){ bit=+b.dataset.bit; Array.prototype.forEach.call(document.querySelectorAll('.bitbtn'),function(x){x.setAttribute('aria-pressed',String(+x.dataset.bit===bit));}); lwe(); }); });
   document.getElementById('lwe-rows').addEventListener('input',lwe); lwe();
+  })();
 })();
 </script>
 
@@ -1633,7 +1640,7 @@ function txt(id,v){ var n=document.getElementById(id); if(n) n.textContent=v; }
 
 /* ================= lesson 4: drag the target, solve CVP with two bases ========= */
 (function(){
-  var svg=document.getElementById('cvp'); if(!svg) return;
+  var svg=document.getElementById('cvp'); if(!svg||!document.getElementById('cvp-out')) return;
   var S=20, GOOD=[[1,0],[0,1]], BAD0=[[5,2],[3,1]], BAD=[[5,2],[3,1]];
   var gG=document.getElementById('cvp-good'), gB=document.getElementById('cvp-bad');
   var out=document.getElementById('cvp-out'), verdict=document.getElementById('cvp-verdict');
@@ -1724,6 +1731,7 @@ function txt(id,v){ var n=document.getElementById(id); if(n) n.textContent=v; }
   /* ---- basis reduction: the attack the lesson names but never shows ---- */
   var lllBtn=document.getElementById('cvp-lll'), lllNote=document.getElementById('cvp-lll-note');
   var step=0, finished=false;
+  if(!lllBtn||!lllNote){ draw(); return; }              // reduction card not on this page
   function n2(v){ return v[0]*v[0]+v[1]*v[1]; }
   function dotp(a,b){ return a[0]*b[0]+a[1]*b[1]; }
   function vec(v){ return '('+v[0]+','+v[1]+')'; }

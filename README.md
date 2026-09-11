@@ -2,7 +2,7 @@
 
 Illustrated study notes for Easttom's Quantum Cryptography course — RSA, DH, lattices, LWE, NTRU, Kyber and FrodoKEM worked with real numbers, one self-contained page with twelve live playgrounds.
 
-**Live page:** <https://systemslibrarian.github.io/quantum-crypto-illustrated/>
+**Live page:** <https://systemslibrarian.github.io/quantum-crypto-illustrated/> — or [the whole thing on one page](https://systemslibrarian.github.io/quantum-crypto-illustrated/all/)
 
 ## Live demos
 
@@ -38,9 +38,23 @@ The Lamport and FO demos run a real SHA-256 implemented in the page (verified ag
 - **7 — FrodoKEM.** Ring / module / plain LWE spectrum, parameter table, keygen–encaps–decaps with the decryption-failure caveat.
 - **8 — Other families.** Map of multivariate, code-based, hash-based, isogeny with status pills; the T∘F∘S trapdoor; McEliece/Niederreiter; Lamport signatures; SWIFFT; isogeny key exchange as a commutative square.
 
+## Structure
+
+`index.html` is the only file anyone edits — the complete notes, all eight lessons, self-contained (inline CSS, inline SVG, vanilla JS for the twelve playgrounds). Open it directly from disk and everything works.
+
+`build.js` splits it into the published site. It has no dependencies and runs in the Pages workflow:
+
+```
+/                 hub — the eight lessons, with the demos indexed
+/lesson-1/ … /lesson-8/
+/all/             the complete page, as before
+```
+
+Each generated page carries the same stylesheet and script; every demo module no-ops when its elements are absent, so nothing needs conditional bundling. The generator rewrites `#anchors` to point at whichever page now holds them, and adds the lesson bar and prev/next links. Rebuild locally with `node build.js` (output lands in `dist/`, which is gitignored).
+
 ## Build
 
-None. One self-contained HTML file: inline CSS, inline SVG, vanilla JS for the twelve playgrounds. The only external request is Google Fonts (IBM Plex Sans / Mono) with system fallbacks. Light and dark follow the OS setting.
+`node build.js` — no dependencies, no toolchain. The only external request is Google Fonts (IBM Plex Sans / Mono) with system fallbacks. Light and dark follow the OS setting.
 
 ## Notes on accuracy
 
