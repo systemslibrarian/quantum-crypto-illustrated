@@ -133,7 +133,7 @@ const EXTRA_CSS = `
 .lessonbar ul a{display:inline-block;min-width:1.9rem;padding:.2rem .1rem;text-align:center;border-radius:6px;
   text-decoration:none;color:var(--ink-2);border:1px solid transparent}
 .lessonbar ul a:hover{border-color:var(--violet);color:var(--violet)}
-.lessonbar ul a.on{background:var(--violet);color:#fff;font-weight:600}
+.lessonbar ul a.on{background:var(--violet);color:var(--paper);font-weight:600}
 .lessonbar .home,.lessonbar .all{text-decoration:none;color:var(--ink-2);white-space:nowrap}
 .lessonbar .home:hover,.lessonbar .all:hover{color:var(--violet)}
 .lessonbar .all{margin-left:auto}
