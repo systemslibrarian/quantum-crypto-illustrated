@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quantum Cryptography — illustrated notes, lessons 1–8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb; --paper:#ffffff; --ink:#1b2233; --ink-2:#4a5568; --rule:#d7dce8;
+  --grid:rgba(27,34,51,.06);
+  --violet:#5b4bdb; --violet-soft:#ece9fb;
+  --teal:#0e9f8a; --teal-soft:#e0f5f1;
+  --amber:#c9780a; --amber-soft:#fdf0dc;
+  --red:#c8372d; --red-soft:#fbe6e3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121622; --paper:#1a2030; --ink:#e7eaf2; --ink-2:#a8b0c2; --rule:#2c3549;
+    --grid:rgba(231,234,242,.05);
+    --violet:#9d90ff; --violet-soft:#2a2750;
+    --teal:#4ad4be; --teal-soft:#123c36;
+    --amber:#f0a83a; --amber-soft:#3d2c10;
+    --red:#ff7a6e; --red-soft:#4a1f1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121622; --paper:#1a2030; --ink:#e7eaf2; --ink-2:#a8b0c2; --rule:#2c3549;
+  --grid:rgba(231,234,242,.05);
+  --violet:#9d90ff; --violet-soft:#2a2750;
+  --teal:#4ad4be; --teal-soft:#123c36;
+  --amber:#f0a83a; --amber-soft:#3d2c10;
+  --red:#ff7a6e; --red-soft:#4a1f1b;
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{
+  margin:0; color:var(--ink); background:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  line-height:1.6;
+}
+code,.mono,kbd{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+a{color:var(--violet)}
+.wrap{max-width:46rem;margin:0 auto;padding:2.5rem 1.25rem 5rem}
+header.hero{padding:2rem 0 1.5rem;border-bottom:2px solid var(--ink)}
+header.hero h1{font-size:2.1rem;line-height:1.15;margin:0 0 .6rem;font-weight:600;letter-spacing:-.01em}
+header.hero p{margin:0;color:var(--ink-2);max-width:38rem}
+header.hero .meta{margin-top:1rem;font-size:.9rem;color:var(--ink-2)}
+nav.toc{margin:1.5rem 0 0;padding:1rem 1.25rem;background:var(--paper);border:1px solid var(--rule);border-radius:10px}
+nav.toc ol{margin:.25rem 0 0;padding-left:1.25rem}
+nav.toc li{margin:.15rem 0}
+h2{font-size:1.5rem;margin:3rem 0 .5rem;padding-top:.75rem;border-top:1px solid var(--rule);font-weight:600;letter-spacing:-.01em}
+h2 .lesson{display:block;font-size:.85rem;font-weight:500;color:var(--violet);margin-bottom:.2rem}
+h3{font-size:1.15rem;margin:2rem 0 .4rem;font-weight:600}
+p{margin:.6rem 0}
+.lede{font-size:1.08rem;color:var(--ink-2)}
+figure{margin:1.25rem 0;padding:1rem 1rem .75rem;background:var(--paper);border:1px solid var(--rule);border-radius:12px;overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+figcaption{font-size:.88rem;color:var(--ink-2);margin-top:.6rem;line-height:1.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.callout{border-left:4px solid var(--violet);background:var(--violet-soft);padding:.75rem 1rem;border-radius:0 10px 10px 0;margin:1.25rem 0}
+.callout.warn{border-color:var(--amber);background:var(--amber-soft)}
+.callout.ok{border-color:var(--teal);background:var(--teal-soft)}
+.callout p{margin:.3rem 0}
+table{border-collapse:collapse;width:100%;font-size:.95rem;background:var(--paper);border-radius:10px;overflow:hidden}
+th,td{padding:.55rem .7rem;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font-weight:600;background:var(--violet-soft)}
+tr:last-child td{border-bottom:0}
+.tbl{overflow-x:auto;margin:1rem 0;border:1px solid var(--rule);border-radius:10px}
+.pill{display:inline-block;padding:.05rem .5rem;border-radius:999px;font-size:.82rem;font-weight:500}
+.pill.ok{background:var(--teal-soft);color:var(--teal)}
+.pill.bad{background:var(--red-soft);color:var(--red)}
+.pill.warn{background:var(--amber-soft);color:var(--amber)}
+.math{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:.6rem .9rem;font-family:"IBM Plex Mono",monospace;font-size:.95rem;overflow-x:auto;margin:.6rem 0}
+/* playground */
+.play{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:1rem 1.1rem;margin:1.25rem 0}
+.play h4{margin:0 0 .5rem;font-size:1rem;font-weight:600}
+.play .row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+.play label{display:flex;flex-direction:column;font-size:.85rem;color:var(--ink-2);gap:.2rem}
+.play input{font:inherit;font-family:"IBM Plex Mono",monospace;width:6.5rem;padding:.4rem .5rem;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink)}
+.play input:focus{outline:2px solid var(--violet);outline-offset:1px}
+.play .out{margin-top:.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.5rem}
+.play .stat{background:var(--bg);border-radius:8px;padding:.5rem .7rem}
+.play .stat b{display:block;font-family:"IBM Plex Mono",monospace;font-size:1.15rem;font-weight:500}
+.play .stat span{font-size:.8rem;color:var(--ink-2)}
+.play .note{font-size:.85rem;color:var(--ink-2);margin:.6rem 0 0}
+.play .err{color:var(--red)}
+/* svg text */
+svg text{font-family:"IBM Plex Sans",system-ui,sans-serif;fill:var(--ink)}
+svg .mono{font-family:"IBM Plex Mono",monospace}
+svg .dim{fill:var(--ink-2)}
+svg .st{stroke:var(--ink);fill:none}
+svg .rule{stroke:var(--rule)}
+svg .v{fill:var(--violet)} svg .vs{stroke:var(--violet)} svg .vb{fill:var(--violet-soft)}
+svg .t{fill:var(--teal)} svg .ts{stroke:var(--teal)} svg .tb{fill:var(--teal-soft)}
+svg .a{fill:var(--amber)} svg .as{stroke:var(--amber)} svg .ab{fill:var(--amber-soft)}
+svg .r{fill:var(--red)} svg .rs{stroke:var(--red)} svg .rb{fill:var(--red-soft)}
+svg .paper{fill:var(--paper)}
+svg .white{fill:var(--paper)}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){ .play input{transition:outline-color .15s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="mk-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--ink)"/></marker>
+<marker id="mk-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--teal)"/></marker>
+<marker id="mk-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--red)"/></marker>
+<marker id="mk-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--amber)"/></marker>
+<marker id="mk-v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--violet)"/></marker>
+</defs></svg>
+
+
+<header class="hero">
+  <h1>Quantum Cryptography<br>illustrated notes</h1>
+  <p>Dr. Chuck Easttom's Pearson course on LinkedIn Learning. The whole course, redrawn as pictures: why today's public-key math falls to a quantum computer, the arithmetic RSA and Diffie-Hellman run on, the algebra the lattice schemes are built from, what NIST standardized, how a lattice hides a key, and the four algorithm families — NTRU, CRYSTALS, FrodoKEM, and the rest — worked through with real numbers.</p>
+  <div class="meta">Course: 2h 4m · Advanced · released 26 Mar 2026 · <a href="https://www.linkedin.com/learning/quantum-cryptography-by-pearson?u=16599444">course page</a></div>
+  <nav class="toc" aria-label="Contents">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#threat">The threat: which locks break, and why</a></li>
+      <li><a href="#modular">Modular arithmetic, congruence, the totient</a></li>
+      <li><a href="#rsa">RSA, worked with 17 and 11</a></li>
+      <li><a href="#dh">Diffie-Hellman</a></li>
+      <li><a href="#sets">Sets and functions</a></li>
+      <li><a href="#vectors">Vectors, independence, dimension</a></li>
+      <li><a href="#algebra">Group → ring → field</a></li>
+      <li><a href="#rings">Polynomial rings and the truncated ring</a></li>
+      <li><a href="#standards">The standards NIST and the NSA picked</a></li>
+      <li><a href="#lattices">Lattices, SVP, CVP, basis reduction</a></li>
+      <li><a href="#lwe">Learning with errors, step by step</a></li>
+      <li><a href="#security">IND-CPA / CCA / CCA2</a></li>
+      <li><a href="#ntru">NTRU, fully worked</a></li>
+      <li><a href="#crystals">CRYSTALS: Kyber and Dilithium</a></li>
+      <li><a href="#frodo">FrodoKEM</a></li>
+      <li><a href="#others">The other families</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- ============================================================ -->
+<h2 id="threat"><span class="lesson">Lesson 1</span>The threat: which locks break, and why</h2>
+<p class="lede">Every classical public-key scheme rests on a trapdoor: a calculation that is easy forward and impractical backward. Quantum algorithms make the backward direction practical.</p>
+
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-label="One-way functions: easy forward, hard backward classically, practical backward with a quantum computer">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker>
+  </defs>
+  <rect x="20" y="70" width="180" height="110" rx="12" class="vb"/>
+  <text x="110" y="112" text-anchor="middle" font-size="15" font-weight="600">Inputs</text>
+  <text x="110" y="136" text-anchor="middle" font-size="14" class="mono">p, q  (primes)</text>
+  <text x="110" y="158" text-anchor="middle" font-size="14" class="mono">a  (exponent)</text>
+  <rect x="520" y="70" width="180" height="110" rx="12" class="vb"/>
+  <text x="610" y="112" text-anchor="middle" font-size="15" font-weight="600">Public value</text>
+  <text x="610" y="136" text-anchor="middle" font-size="14" class="mono">n = p·q</text>
+  <text x="610" y="158" text-anchor="middle" font-size="14" class="mono">gᵃ mod p</text>
+
+  <path d="M205 100 H510" class="ts" stroke-width="3" marker-end="url(#mk-t)" style="color:var(--teal)"/>
+  <text x="360" y="90" text-anchor="middle" font-size="13" class="t" font-weight="600">easy: multiply, exponentiate</text>
+
+  <path d="M510 150 H205" class="rs" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#mk-r)" style="color:var(--red)"/>
+  <text x="360" y="172" text-anchor="middle" font-size="13" class="r" font-weight="600">classical: factor / discrete log — centuries</text>
+
+  <path d="M510 205 H205" class="as" stroke-width="3" marker-end="url(#mk-a)" style="color:var(--amber)"/>
+  <text x="360" y="228" text-anchor="middle" font-size="13" class="a" font-weight="600">quantum (Shor): practical time</text>
+</svg>
+<figcaption>The public key is the output of the easy direction. Security is the claim that nobody can run the arrow backward. That claim is mathematically proven false for a quantum computer.</figcaption>
+</figure>
+
+<div class="tbl"><table>
+<thead><tr><th>Family</th><th>Hard problem it relies on</th><th>Classical</th><th>Quantum</th></tr></thead>
+<tbody>
+<tr><td>RSA</td><td>Factor n = p·q</td><td><span class="pill ok">secure</span></td><td><span class="pill bad">broken</span></td></tr>
+<tr><td>Diffie-Hellman, ElGamal, MQV</td><td>Discrete logarithm</td><td><span class="pill ok">secure</span></td><td><span class="pill bad">broken</span></td></tr>
+<tr><td>Elliptic curve suite</td><td>Discrete log on a curve</td><td><span class="pill ok">secure</span></td><td><span class="pill bad">broken</span></td></tr>
+<tr><td>Symmetric ciphers</td><td>No number-theory trapdoor</td><td><span class="pill ok">secure</span></td><td><span class="pill warn">weakened, not broken</span></td></tr>
+<tr><td>Hashes</td><td>No number-theory trapdoor</td><td><span class="pill ok">secure</span></td><td><span class="pill warn">weakened, not broken</span></td></tr>
+</tbody></table></div>
+
+<div class="callout warn">
+<p><strong>Where it bites.</strong> Nearly every network connection starts with an asymmetric handshake: e-commerce, banking, VPNs, plane tickets, online classes. Cryptocurrencies link blocks with hashes (fine) but prove ownership with public-key signatures (not fine).</p>
+</div>
+
+<p>Candidate replacements named in the course: <strong>CRYSTALS-Kyber</strong> (NIST standard), <strong>FrodoKEM</strong> (reached round 3, not selected, used by the German government), and <strong>NTRU</strong> (one of the most-studied lattice schemes).</p>
+
+<!-- ============================================================ -->
+<h2 id="modular"><span class="lesson">Lesson 1</span>Modular arithmetic, congruence, the totient</h2>
+
+<h3>The modulus is the edge of the universe</h3>
+<p>Programmers say "divide and keep the remainder." Mathematicians say "do all your arithmetic inside a world of size m." The clock is the everyday version: 4 o'clock plus 10 hours is 14, but the clock has no 14, so it lands on 2.</p>
+
+<figure>
+<svg viewBox="0 0 720 260" role="img" aria-label="A 12-hour clock showing 4 plus 10 wrapping to 2, and a number line for mod 5 showing 8 and 13 both landing on 3">
+  <!-- clock -->
+  <g transform="translate(130,130)">
+    <circle r="100" class="st" stroke-width="2"/>
+    <g font-size="13" text-anchor="middle" dominant-baseline="middle">
+      <text x="0" y="-84">12</text><text x="42" y="-73">1</text><text x="73" y="-42">2</text><text x="84" y="0">3</text>
+      <text x="73" y="42">4</text><text x="42" y="73">5</text><text x="0" y="84">6</text><text x="-42" y="73">7</text>
+      <text x="-73" y="42">8</text><text x="-84" y="0">9</text><text x="-73" y="-42">10</text><text x="-42" y="-73">11</text>
+    </g>
+    <!-- arc from 4 (120°) sweeping +10 hours = 300° to 2 (60°) -->
+    <path d="M 52 30 A 60 60 0 1 1 30 -52" class="vs" fill="none" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="52" cy="30" r="5" class="v"/>
+    <circle cx="30" cy="-52" r="5" class="v"/>
+    <text x="0" y="6" text-anchor="middle" font-size="12" class="dim">+10 h</text>
+  </g>
+  <text x="130" y="248" text-anchor="middle" font-size="14"><tspan class="mono">4 + 10 = 14 ≡ 2 (mod 12)</tspan></text>
+
+  <!-- number line mod 5 -->
+  <g transform="translate(300,80)">
+    <text x="0" y="0" font-size="14" font-weight="600">Same thing, mod 5</text>
+    <line x1="0" y1="70" x2="400" y2="70" class="st" stroke-width="2"/>
+    <g font-size="12" text-anchor="middle">
+      <!-- ticks 0..15 spaced 25 -->
+      <g id="ticks"></g>
+    </g>
+  </g>
+</svg>
+<figcaption>The modulus wraps the number line into a loop. Anything that lands on the same spot is <em>congruent</em>, written with three bars: 8 ≡ 13 (mod 5), because both leave remainder 3.</figcaption>
+</figure>
+
+<div class="math">8 mod 5 = 3 &nbsp; 13 mod 5 = 3 &nbsp; 18 mod 5 = 3 &nbsp; → &nbsp; 8 ≡ 13 ≡ 18 (mod 5)</div>
+
+<h3>Relatively prime, and Euler's totient φ(n)</h3>
+<p>Two numbers are <strong>relatively prime</strong> (co-prime) if they share no factor other than 1. The <strong>totient</strong> φ(n) counts how many integers below n are relatively prime to it. Euler worked this out in the 1700s for no practical reason at all; RSA found the reason 200 years later.</p>
+
+<figure>
+<svg viewBox="0 0 720 150" role="img" aria-label="Integers 1 through 14 with those relatively prime to 15 highlighted; the count is 8">
+  <text x="10" y="22" font-size="14" font-weight="600">φ(15): which of 1…14 share no factor with 15 = 3 × 5?</text>
+  <g font-size="15" text-anchor="middle" dominant-baseline="middle">
+    <!-- coprime: 1,2,4,7,8,11,13,14 -->
+    <g transform="translate(20,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">1</text></g>
+    <g transform="translate(68,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">2</text></g>
+    <g transform="translate(116,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">3</text></g>
+    <g transform="translate(164,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">4</text></g>
+    <g transform="translate(212,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">5</text></g>
+    <g transform="translate(260,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">6</text></g>
+    <g transform="translate(308,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">7</text></g>
+    <g transform="translate(356,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">8</text></g>
+    <g transform="translate(404,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">9</text></g>
+    <g transform="translate(452,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">10</text></g>
+    <g transform="translate(500,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">11</text></g>
+    <g transform="translate(548,45)">
+      <rect width="40" height="40" rx="8" class="rb"/><text x="20" y="21" class="r">12</text></g>
+    <g transform="translate(596,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">13</text></g>
+    <g transform="translate(644,45)">
+      <rect width="40" height="40" rx="8" class="tb"/><text x="20" y="21" class="t" font-weight="600">14</text></g>
+  </g>
+  <text x="10" y="118" font-size="13" class="t" font-weight="600">■ co-prime with 15 → 8 of them, so φ(15) = 8</text>
+  <text x="380" y="118" font-size="13" class="r">■ shares a factor (3 or 5)</text>
+</svg>
+<figcaption>Brute force works for 15 but never for a 600-digit number. Two shortcuts make RSA possible.</figcaption>
+</figure>
+
+<div class="two">
+<div class="callout ok"><p><strong>Shortcut 1 — primes.</strong> Nothing below a prime shares a factor with it, so φ(p) = p − 1. φ(7) = 6, φ(11) = 10, φ(13) = 12.</p></div>
+<div class="callout ok"><p><strong>Shortcut 2 — products of two primes.</strong> φ(p·q) = φ(p)·φ(q) = (p−1)(q−1). No enumeration needed, however large p and q are.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="rsa"><span class="lesson">Lesson 1</span>RSA, worked with 17 and 11</h2>
+<p class="lede">"That's all fifth-grade math." Pick primes, multiply, take a totient, solve one equation. The letters are deliberate: <strong>e</strong> encrypts, <strong>d</strong> decrypts.</p>
+
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-label="RSA key generation pipeline: p and q give n and φ, e is chosen, d is solved, then encryption and decryption of the message 3">
+  <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <!-- row 1: p, q -->
+  <g transform="translate(20,20)">
+    <rect width="120" height="56" rx="10" class="vb"/>
+    <text x="60" y="24" text-anchor="middle" font-size="12" class="dim">choose primes</text>
+    <text x="60" y="45" text-anchor="middle" font-size="16" class="mono">p=17  q=11</text>
+  </g>
+  <path d="M145 48 H205" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <g transform="translate(210,20)">
+    <rect width="130" height="56" rx="10" class="vb"/>
+    <text x="65" y="24" text-anchor="middle" font-size="12" class="dim">n = p · q</text>
+    <text x="65" y="45" text-anchor="middle" font-size="16" class="mono">n = 187</text>
+  </g>
+  <path d="M145 48 Q175 48 175 110 Q175 130 205 130" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <g transform="translate(210,102)">
+    <rect x="-5" width="140" height="56" rx="10" class="vb"/>
+    <text x="65" y="24" text-anchor="middle" font-size="12" class="dim">φ(n) = (p−1)(q−1)</text>
+    <text x="65" y="45" text-anchor="middle" font-size="15" class="mono">m = 16·10 = 160</text>
+  </g>
+  <path d="M345 130 H405" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <g transform="translate(410,102)">
+    <rect width="130" height="56" rx="10" class="vb"/>
+    <text x="65" y="24" text-anchor="middle" font-size="12" class="dim">pick e co-prime to m</text>
+    <text x="65" y="45" text-anchor="middle" font-size="16" class="mono">e = 7</text>
+  </g>
+  <path d="M545 130 H605" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <g transform="translate(610,102)">
+    <rect width="100" height="56" rx="10" class="vb"/>
+    <text x="50" y="24" text-anchor="middle" font-size="11" class="dim">d·e ≡ 1 (mod m)</text>
+    <text x="50" y="45" text-anchor="middle" font-size="16" class="mono">d = 23</text>
+  </g>
+  <!-- keys -->
+  <g transform="translate(210,190)">
+    <rect width="230" height="46" rx="10" class="tb"/>
+    <text x="115" y="19" text-anchor="middle" font-size="12" class="t" font-weight="600">PUBLIC KEY — publish it</text>
+    <text x="115" y="38" text-anchor="middle" font-size="15" class="mono">(e, n) = (7, 187)</text>
+  </g>
+  <g transform="translate(460,190)">
+    <rect width="250" height="46" rx="10" class="ab"/>
+    <text x="125" y="19" text-anchor="middle" font-size="12" class="a" font-weight="600">PRIVATE KEY — keep it</text>
+    <text x="125" y="38" text-anchor="middle" font-size="15" class="mono">(d, n) = (23, 187)</text>
+  </g>
+  <!-- encryption row -->
+  <g transform="translate(20,265)">
+    <rect width="90" height="46" rx="10" class="paper" stroke="var(--rule)"/>
+    <text x="45" y="19" text-anchor="middle" font-size="12" class="dim">message</text>
+    <text x="45" y="38" text-anchor="middle" font-size="16" class="mono">3</text>
+  </g>
+  <path d="M115 288 H235" class="ts" stroke-width="2.5" marker-end="url(#mk-t)" style="color:var(--teal)"/>
+  <text x="175" y="280" text-anchor="middle" font-size="12" class="t mono">3⁷ mod 187</text>
+  <g transform="translate(240,265)">
+    <rect width="110" height="46" rx="10" class="paper" stroke="var(--rule)"/>
+    <text x="55" y="19" text-anchor="middle" font-size="12" class="dim">ciphertext</text>
+    <text x="55" y="38" text-anchor="middle" font-size="16" class="mono">130</text>
+  </g>
+  <path d="M355 288 H535" class="as" stroke-width="2.5" marker-end="url(#mk-a)" style="color:var(--amber)"/>
+  <text x="445" y="280" text-anchor="middle" font-size="12" class="a mono">130²³ mod 187</text>
+  <g transform="translate(540,265)">
+    <rect width="90" height="46" rx="10" class="paper" stroke="var(--rule)"/>
+    <text x="45" y="19" text-anchor="middle" font-size="12" class="dim">recovered</text>
+    <text x="45" y="38" text-anchor="middle" font-size="16" class="mono">3</text>
+  </g>
+</svg>
+<figcaption>Encrypt: raise to <em>e</em> mod n. Decrypt: raise to <em>d</em> mod n. Real keys use p and q of a few hundred digits each so that n is 2048 or 4096 bits.</figcaption>
+</figure>
+
+<div class="callout warn">
+<p><strong>Why factoring kills it.</strong> n = 187 is in the public key. Factor it and you have p = 17, q = 11 → m = 160 → with the public e, solving for d takes moments. For a 2048-bit n a classical computer cannot factor; a quantum computer running Shor's algorithm can.</p>
+</div>
+
+<div class="play" id="rsa-play">
+  <h4>Try it with other small primes</h4>
+  <div class="row">
+    <label>p <input id="p" type="number" value="17" min="2"></label>
+    <label>q <input id="q" type="number" value="11" min="2"></label>
+    <label>e <input id="e" type="number" value="7" min="2"></label>
+    <label>message <input id="msg" type="number" value="3" min="0"></label>
+  </div>
+  <div class="out" id="rsa-out"></div>
+  <p class="note" id="rsa-note">d is found with the extended Euclidean algorithm; the page just brute-forces it since m is tiny.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="dh"><span class="lesson">Lesson 1</span>Diffie-Hellman</h2>
+<p class="lede">Agree on a shared secret over a channel everyone can read. Nothing secret is ever sent.</p>
+<p>Public parameters: a prime <strong>p</strong> and a generator <strong>g</strong> — an integer whose powers mod p hit every value from 1 to p−1. Each side keeps a private exponent and publishes g raised to it.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="Diffie-Hellman: Alice and Bob each keep a private exponent, exchange public values, and both compute the same shared key">
+  <defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <rect x="200" y="12" width="320" height="34" rx="8" class="vb"/>
+  <text x="360" y="34" text-anchor="middle" font-size="14">public: prime <tspan class="mono">p</tspan>, generator <tspan class="mono">g</tspan></text>
+
+  <!-- Alice column -->
+  <text x="110" y="82" text-anchor="middle" font-size="16" font-weight="600">Alice</text>
+  <rect x="30" y="95" width="160" height="44" rx="10" class="ab"/>
+  <text x="110" y="113" text-anchor="middle" font-size="12" class="a" font-weight="600">private</text>
+  <text x="110" y="131" text-anchor="middle" font-size="15" class="mono">a</text>
+  <rect x="30" y="155" width="160" height="44" rx="10" class="tb"/>
+  <text x="110" y="173" text-anchor="middle" font-size="12" class="t" font-weight="600">public</text>
+  <text x="110" y="191" text-anchor="middle" font-size="15" class="mono">A = gᵃ mod p</text>
+  <!-- Bob column -->
+  <text x="610" y="82" text-anchor="middle" font-size="16" font-weight="600">Bob</text>
+  <rect x="530" y="95" width="160" height="44" rx="10" class="ab"/>
+  <text x="610" y="113" text-anchor="middle" font-size="12" class="a" font-weight="600">private</text>
+  <text x="610" y="131" text-anchor="middle" font-size="15" class="mono">b</text>
+  <rect x="530" y="155" width="160" height="44" rx="10" class="tb"/>
+  <text x="610" y="173" text-anchor="middle" font-size="12" class="t" font-weight="600">public</text>
+  <text x="610" y="191" text-anchor="middle" font-size="15" class="mono">B = gᵇ mod p</text>
+  <!-- exchange arrows -->
+  <path d="M195 170 H525" class="ts" stroke-width="2.5" marker-end="url(#mk-t)" style="color:var(--teal)"/>
+  <path d="M525 185 H195" class="ts" stroke-width="2.5" marker-end="url(#mk-t)" style="color:var(--teal)"/>
+  <text x="360" y="162" text-anchor="middle" font-size="12" class="dim">A goes right, B goes left — an eavesdropper sees both</text>
+  <!-- key -->
+  <rect x="30" y="225" width="160" height="50" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="110" y="246" text-anchor="middle" font-size="13" class="mono">Bᵃ = gᵇᵃ</text>
+  <text x="110" y="265" text-anchor="middle" font-size="12" class="dim">mod p</text>
+  <rect x="530" y="225" width="160" height="50" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="610" y="246" text-anchor="middle" font-size="13" class="mono">Aᵇ = gᵃᵇ</text>
+  <text x="610" y="265" text-anchor="middle" font-size="12" class="dim">mod p</text>
+  <rect x="260" y="225" width="200" height="50" rx="10" class="vb"/>
+  <text x="360" y="246" text-anchor="middle" font-size="13" font-weight="600">same number: the key k</text>
+  <text x="360" y="265" text-anchor="middle" font-size="12" class="dim">because gᵃᵇ = gᵇᵃ</text>
+  <line x1="195" y1="250" x2="255" y2="250" class="st" stroke-width="2"/>
+  <line x1="465" y1="250" x2="525" y2="250" class="st" stroke-width="2"/>
+</svg>
+<figcaption>The eavesdropper holds g, p, A and B. Recovering a from A = gᵃ mod p is the discrete logarithm — infeasible classically, practical on a quantum computer. ElGamal, MQV and the elliptic-curve suite all lean on the same problem.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="sets"><span class="lesson">Lesson 2</span>Sets and functions</h2>
+<p class="lede">The lattice algorithms are built from algebraic structures, and every structure starts with a set. Lesson 2 is the vocabulary; the shapes below are the vocabulary drawn.</p>
+
+<div class="math">x ∈ A &nbsp;"x is a member of A" &nbsp;&nbsp; x ∉ A &nbsp;"x is not" &nbsp;&nbsp; A = {1, 3, 5, 7, 9} &nbsp;&nbsp; A = {1, 3, 5, …} infinite &nbsp;&nbsp; order never matters</div>
+
+<figure>
+<svg viewBox="0 0 720 200" role="img" aria-label="Four Venn diagrams: union, intersection, difference, and disjoint sets">
+  <g transform="translate(0,0)">
+    <circle cx="70" cy="80" r="45" class="vb"/><circle cx="110" cy="80" r="45" class="vb"/>
+    <circle cx="70" cy="80" r="45" class="vs" fill="none" stroke-width="2"/><circle cx="110" cy="80" r="45" class="vs" fill="none" stroke-width="2"/>
+    <text x="55" y="84" font-size="13">A</text><text x="118" y="84" font-size="13">B</text>
+    <text x="90" y="160" text-anchor="middle" font-size="14" font-weight="600">A ∪ B</text>
+    <text x="90" y="180" text-anchor="middle" font-size="12" class="dim">in either or both</text>
+  </g>
+  <g transform="translate(180,0)">
+    <clipPath id="c1"><circle cx="70" cy="80" r="45"/></clipPath>
+    <circle cx="110" cy="80" r="45" class="vb" clip-path="url(#c1)"/>
+    <circle cx="70" cy="80" r="45" class="vs" fill="none" stroke-width="2"/><circle cx="110" cy="80" r="45" class="vs" fill="none" stroke-width="2"/>
+    <text x="55" y="84" font-size="13">A</text><text x="118" y="84" font-size="13">B</text>
+    <text x="90" y="160" text-anchor="middle" font-size="14" font-weight="600">A ∩ B</text>
+    <text x="90" y="180" text-anchor="middle" font-size="12" class="dim">only in both</text>
+  </g>
+  <g transform="translate(360,0)">
+    <mask id="m1"><rect width="200" height="200" fill="#fff"/><circle cx="110" cy="80" r="45" fill="#000"/></mask>
+    <circle cx="70" cy="80" r="45" class="vb" mask="url(#m1)"/>
+    <circle cx="70" cy="80" r="45" class="vs" fill="none" stroke-width="2"/><circle cx="110" cy="80" r="45" class="vs" fill="none" stroke-width="2"/>
+    <text x="55" y="84" font-size="13">A</text><text x="118" y="84" font-size="13">B</text>
+    <text x="90" y="160" text-anchor="middle" font-size="14" font-weight="600">A ∖ B</text>
+    <text x="90" y="180" text-anchor="middle" font-size="12" class="dim">in A, not in B</text>
+  </g>
+  <g transform="translate(540,0)">
+    <circle cx="60" cy="80" r="42" class="vb"/><circle cx="130" cy="80" r="42" class="vb"/>
+    <circle cx="60" cy="80" r="42" class="vs" fill="none" stroke-width="2"/><circle cx="130" cy="80" r="42" class="vs" fill="none" stroke-width="2"/>
+    <text x="55" y="84" font-size="13">A</text><text x="125" y="84" font-size="13">B</text>
+    <text x="95" y="160" text-anchor="middle" font-size="14" font-weight="600">A ∩ B = ∅</text>
+    <text x="95" y="180" text-anchor="middle" font-size="12" class="dim">disjoint — complements</text>
+  </g>
+</svg>
+<figcaption>Complement of a complement is the original set. A subset sits wholly inside another (odd numbers &lt; 10 ⊂ odd numbers &lt; 100). The set of all subsets is the <em>power set</em>.</figcaption>
+</figure>
+
+<h3>Three kinds of mapping</h3>
+<figure>
+<svg viewBox="0 0 720 230" role="img" aria-label="Arrow diagrams for injective, surjective, and bijective functions between sets A and B">
+  <defs><marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <!-- injective: A 3 dots -> B 4 dots, one B unused -->
+  <g transform="translate(20,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">Injective (one-to-one)</text>
+    <rect x="20" y="15" width="50" height="150" rx="25" class="vb"/><rect x="130" y="15" width="50" height="150" rx="25" class="vb"/>
+    <text x="45" y="185" text-anchor="middle" font-size="12" class="dim">A</text><text x="155" y="185" text-anchor="middle" font-size="12" class="dim">B</text>
+    <g class="v"><circle cx="45" cy="50" r="5"/><circle cx="45" cy="90" r="5"/><circle cx="45" cy="130" r="5"/>
+      <circle cx="155" cy="40" r="5"/><circle cx="155" cy="70" r="5"/><circle cx="155" cy="105" r="5"/><circle cx="155" cy="140" r="5"/></g>
+    <g class="st" stroke-width="1.8" style="color:var(--ink)">
+      <path d="M52 50 L146 40" marker-end="url(#mk-ink)"/><path d="M52 90 L146 70" marker-end="url(#mk-ink)"/><path d="M52 130 L146 140" marker-end="url(#mk-ink)"/></g>
+    <text x="100" y="212" text-anchor="middle" font-size="11" class="dim">every A hits a distinct B; some B unused</text>
+  </g>
+  <!-- surjective: A 4 dots -> B 3 dots -->
+  <g transform="translate(260,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">Surjective (onto)</text>
+    <rect x="20" y="15" width="50" height="150" rx="25" class="vb"/><rect x="130" y="15" width="50" height="150" rx="25" class="vb"/>
+    <text x="45" y="185" text-anchor="middle" font-size="12" class="dim">A</text><text x="155" y="185" text-anchor="middle" font-size="12" class="dim">B</text>
+    <g class="v"><circle cx="45" cy="40" r="5"/><circle cx="45" cy="70" r="5"/><circle cx="45" cy="105" r="5"/><circle cx="45" cy="140" r="5"/>
+      <circle cx="155" cy="50" r="5"/><circle cx="155" cy="90" r="5"/><circle cx="155" cy="130" r="5"/></g>
+    <g class="st" stroke-width="1.8" style="color:var(--ink)">
+      <path d="M52 40 L146 50" marker-end="url(#mk-ink)"/><path d="M52 70 L146 50" marker-end="url(#mk-ink)"/><path d="M52 105 L146 90" marker-end="url(#mk-ink)"/><path d="M52 140 L146 130" marker-end="url(#mk-ink)"/></g>
+    <text x="100" y="212" text-anchor="middle" font-size="11" class="dim">every B is hit; some hit twice (two-to-one)</text>
+  </g>
+  <!-- bijective -->
+  <g transform="translate(500,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">Bijective (both)</text>
+    <rect x="20" y="15" width="50" height="150" rx="25" class="tb"/><rect x="130" y="15" width="50" height="150" rx="25" class="tb"/>
+    <text x="45" y="185" text-anchor="middle" font-size="12" class="dim">A</text><text x="155" y="185" text-anchor="middle" font-size="12" class="dim">B</text>
+    <g class="t"><circle cx="45" cy="50" r="5"/><circle cx="45" cy="90" r="5"/><circle cx="45" cy="130" r="5"/>
+      <circle cx="155" cy="50" r="5"/><circle cx="155" cy="90" r="5"/><circle cx="155" cy="130" r="5"/></g>
+    <g class="ts" fill="none" stroke-width="1.8">
+      <path d="M52 50 L146 50" marker-end="url(#mk-t)"/><path d="M52 90 L146 90" marker-end="url(#mk-t)"/><path d="M52 130 L146 130" marker-end="url(#mk-t)"/></g>
+    <text x="100" y="212" text-anchor="middle" font-size="11" class="dim">perfect pairing — invertible</text>
+  </g>
+</svg>
+<figcaption>Encryption needs a bijection: every plaintext must map to exactly one ciphertext and back. A hash is deliberately many-to-one.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="vectors"><span class="lesson">Lesson 2</span>Vectors, independence, dimension</h2>
+<p>A vector is a list of numbers; drawn, it is an arrow. Length comes from Pythagoras. The question that matters for lattice cryptography is whether a set of vectors is <strong>linearly independent</strong>: can you combine them with scalars (not all zero) and land back on zero? If yes, they're dependent — one of them is redundant.</p>
+
+<figure>
+<svg viewBox="0 0 720 260" role="img" aria-label="Left: a vector (2,1) with its length; middle: two independent vectors spanning a plane; right: two dependent vectors on the same line">
+  <defs><marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <!-- panel 1 -->
+  <g transform="translate(20,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">A vector v = (2, 1)</text>
+    <g class="rule" stroke-width="1">
+      <path d="M30 190 V20 M30 190 H190"/>
+      <path d="M70 15 V190 M110 15 V190 M150 15 V190 M30 150 H190 M30 110 H190 M30 70 H190"/>
+    </g>
+    <path d="M30 190 L110 150" class="vs" stroke-width="3" fill="none" marker-end="url(#mk-v)" style="color:var(--violet)"/>
+    <path d="M30 190 H110 V150" class="as" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+    <text x="70" y="207" text-anchor="middle" font-size="12" class="a">x = 2</text>
+    <text x="125" y="173" font-size="12" class="a">y = 1</text>
+    <text x="100" y="232" text-anchor="middle" font-size="12" class="mono">|v| = √(2² + 1²) = √5</text>
+  </g>
+  <!-- panel 2 -->
+  <g transform="translate(260,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">Independent</text>
+    <g class="rule" stroke-width="1"><path d="M30 190 V20 M30 190 H190"/></g>
+    <path d="M30 190 L150 160" class="vs" stroke-width="3" fill="none" marker-end="url(#mk-v)" style="color:var(--violet)"/>
+    <path d="M30 190 L70 60" class="ts" stroke-width="3" fill="none" marker-end="url(#mk-t)" style="color:var(--teal)"/>
+    <text x="158" y="150" font-size="12" class="v">v₁</text><text x="78" y="62" font-size="12" class="t">v₂</text>
+    <text x="100" y="212" text-anchor="middle" font-size="11" class="dim">no a·v₁ + b·v₂ = 0 unless a = b = 0</text>
+    <text x="100" y="232" text-anchor="middle" font-size="11" class="dim">together they reach the whole plane</text>
+  </g>
+  <!-- panel 3 -->
+  <g transform="translate(500,20)">
+    <text x="100" y="0" text-anchor="middle" font-size="14" font-weight="600">Dependent</text>
+    <g class="rule" stroke-width="1"><path d="M30 190 V20 M30 190 H190"/></g>
+    <path d="M30 190 L170 120" class="vs" stroke-width="3" fill="none" marker-end="url(#mk-v)" style="color:var(--violet)"/>
+    <path d="M30 190 L100 155" class="rs" stroke-width="3" fill="none" marker-end="url(#mk-r)" style="color:var(--red)"/>
+    <text x="178" y="112" font-size="12" class="v">v₁</text><text x="104" y="145" font-size="12" class="r">v₂ = ½·v₁</text>
+    <text x="100" y="212" text-anchor="middle" font-size="11" class="dim">1·v₁ − 2·v₂ = 0 — dependent</text>
+    <text x="100" y="232" text-anchor="middle" font-size="11" class="dim">they only reach one line</text>
+  </g>
+</svg>
+<figcaption>Dimension = the most independent vectors a space can hold. A line holds 1, a plane 2, space 3. Any set larger than the dimension is automatically dependent.</figcaption>
+</figure>
+
+<div class="callout">
+<p><strong>Vector space, informally.</strong> A self-contained world: add any two vectors in it, or scale one by a real number, and you're still in it. "Closed under addition and scalar multiplication." A line through the origin is one; so is a plane; so are spaces too big to draw — which is where lattices live.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="algebra"><span class="lesson">Lesson 2</span>Group → ring → field</h2>
+<p>Secondary-school algebra is one algebra among many. Each structure is a set plus some operations that never leave the set. They nest: each level adds a requirement.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="Nested boxes showing group inside ring inside field, with the requirement each level adds and the example of the integers">
+  <rect x="20" y="20" width="680" height="260" rx="14" class="tb"/>
+  <text x="40" y="48" font-size="15" font-weight="600" class="t">Field</text>
+  <text x="40" y="68" font-size="12" class="dim">2 operations, identity for both, inverse for both — e.g. rationals ℚ, reals ℝ, integers mod a prime</text>
+  <rect x="40" y="85" width="640" height="175" rx="12" class="ab"/>
+  <text x="60" y="112" font-size="15" font-weight="600" class="a">Ring</text>
+  <text x="60" y="132" font-size="12" class="dim">2 operations, but the inverse of only the first — e.g. integers ℤ (no division), polynomials</text>
+  <rect x="60" y="150" width="600" height="90" rx="10" class="vb"/>
+  <text x="80" y="177" font-size="15" font-weight="600" class="v">Group</text>
+  <text x="80" y="197" font-size="12" class="dim">a set, an identity element, 1 operation and its inverse — e.g. ℤ with + and −, identity 0</text>
+  <text x="80" y="222" font-size="12" class="dim">abelian: a + b = b + a &nbsp;·&nbsp; cyclic: every member is a power of one generator</text>
+</svg>
+<figcaption>Every field is a ring and every ring is a group, not the other way round. The integers are a group and a ring but not a field: 3 ÷ 2 isn't an integer.</figcaption>
+</figure>
+
+<div class="tbl"><table>
+<thead><tr><th>Structure</th><th>Operations</th><th>Identities</th><th>Inverses</th><th>Integers ℤ?</th></tr></thead>
+<tbody>
+<tr><td>Group</td><td>1 (+)</td><td>0</td><td>−</td><td><span class="pill ok">yes</span></td></tr>
+<tr><td>Ring</td><td>2 (+, ×)</td><td>0, 1</td><td>− only</td><td><span class="pill ok">yes, commutative</span></td></tr>
+<tr><td>Field</td><td>2 (+, ×)</td><td>0, 1</td><td>−, ÷</td><td><span class="pill bad">no</span></td></tr>
+</tbody></table></div>
+
+<p>A vector space is the same idea with vectors as the elements. That is why sets, vector spaces, and abstract algebra are one lesson: they are all closed worlds you can compute inside, and the functions between them are the injective/surjective/bijective maps from earlier.</p>
+
+<!-- ============================================================ -->
+<h2 id="rings"><span class="lesson">Lesson 2</span>Polynomial rings and the truncated ring</h2>
+<p class="lede">This is the ring NTRU and the lattice KEMs live in. The elements are polynomials; the modulus wraps them into a finite world, just as mod 12 wrapped the clock.</p>
+
+<figure>
+<svg viewBox="0 0 720 260" role="img" aria-label="Diagram of a truncated polynomial ring: coefficients reduced mod q, degree reduced mod x to the N minus 1">
+  <defs><marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <text x="20" y="30" font-size="15" font-weight="600">R[x]: polynomials in x with coefficients in a ring R</text>
+  <text x="20" y="56" font-size="14" class="mono">a₀ + a₁x + a₂x² + a₃x³ + …  goes on forever in both directions</text>
+
+  <rect x="20" y="85" width="680" height="150" rx="12" class="vb"/>
+  <text x="40" y="112" font-size="15" font-weight="600" class="v">Truncate it twice to get a closed world</text>
+
+  <rect x="40" y="130" width="300" height="88" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="190" y="152" text-anchor="middle" font-size="13" font-weight="600">1 — coefficients wrap</text>
+  <text x="190" y="176" text-anchor="middle" font-size="14" class="mono">each aᵢ taken mod q</text>
+  <text x="190" y="200" text-anchor="middle" font-size="12" class="dim">the clock, applied to every coefficient</text>
+
+  <rect x="380" y="130" width="300" height="88" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="530" y="152" text-anchor="middle" font-size="13" font-weight="600">2 — degree wraps</text>
+  <text x="530" y="176" text-anchor="middle" font-size="14" class="mono">reduce mod (xᴺ − 1)</text>
+  <text x="530" y="200" text-anchor="middle" font-size="12" class="dim">so xᴺ = 1: at most degree N−1 survives</text>
+
+  <text x="360" y="252" text-anchor="middle" font-size="14" class="mono">ℤ_q[x] / (xᴺ − 1)</text>
+</svg>
+<figcaption>"Truncated polynomial ring": the integers-mod-q version of R[x], cut off at degree N−1. Polynomial multiplication in it is the convolution at the heart of NTRU; Kyber uses a close cousin with (xᴺ + 1).</figcaption>
+</figure>
+
+<div class="math">Example, N = 3, q = 7: &nbsp;(2 + 3x + x²)·(1 + x) = 2 + 5x + 4x² + x³ &nbsp;→&nbsp; x³ = 1 &nbsp;→&nbsp; 3 + 5x + 4x² &nbsp;(all coefficients already &lt; 7)</div>
+
+<div class="callout">
+<p><strong>Where lesson 2 is heading.</strong> Pick N independent vectors in a big space → they generate a <em>lattice</em>. Finding the shortest vector in that lattice is hard for classical <em>and</em> quantum computers. The truncated ring is the compact way to write those vectors down. That is the bridge from this lesson's vocabulary to NTRU, FrodoKEM and Kyber.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="standards"><span class="lesson">Lesson 3</span>The standards: what NIST and the NSA actually picked</h2>
+<p class="lede">Many mathematical families were proposed. Lattice-based schemes won most of the slots, which is why the rest of the course leans that way.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="NIST post-quantum standards: ML-KEM for key encapsulation, and ML-DSA, SLH-DSA and Falcon for signatures, with their FIPS numbers and mathematical family">
+  <text x="20" y="28" font-size="15" font-weight="600">NIST post-quantum standards</text>
+  <!-- KEM column -->
+  <rect x="20" y="45" width="200" height="235" rx="12" class="tb"/>
+  <text x="120" y="70" text-anchor="middle" font-size="13" font-weight="600" class="t">Encryption / key exchange</text>
+  <rect x="35" y="85" width="170" height="90" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="120" y="108" text-anchor="middle" font-size="14" font-weight="600">CRYSTALS-Kyber</text>
+  <text x="120" y="128" text-anchor="middle" font-size="12" class="dim">now ML-KEM</text>
+  <text x="120" y="147" text-anchor="middle" font-size="12" class="mono">FIPS 203</text>
+  <text x="120" y="165" text-anchor="middle" font-size="11" class="dim">module lattice · LWE</text>
+  <text x="120" y="210" text-anchor="middle" font-size="11" class="dim">"Kyber": the Star Wars crystal</text>
+  <text x="120" y="228" text-anchor="middle" font-size="11" class="dim">that powers lightsabers</text>
+  <!-- Signatures column -->
+  <rect x="240" y="45" width="460" height="235" rx="12" class="vb"/>
+  <text x="470" y="70" text-anchor="middle" font-size="13" font-weight="600" class="v">Digital signatures</text>
+  <rect x="255" y="85" width="140" height="90" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="325" y="108" text-anchor="middle" font-size="14" font-weight="600">Dilithium</text>
+  <text x="325" y="128" text-anchor="middle" font-size="12" class="dim">now ML-DSA</text>
+  <text x="325" y="147" text-anchor="middle" font-size="12" class="mono">FIPS 204</text>
+  <text x="325" y="165" text-anchor="middle" font-size="11" class="dim">module lattice</text>
+  <rect x="405" y="85" width="140" height="90" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="475" y="108" text-anchor="middle" font-size="14" font-weight="600">SPHINCS+</text>
+  <text x="475" y="128" text-anchor="middle" font-size="12" class="dim">now SLH-DSA</text>
+  <text x="475" y="147" text-anchor="middle" font-size="12" class="mono">FIPS 205</text>
+  <text x="475" y="165" text-anchor="middle" font-size="11" class="dim">hash-based (no lattice)</text>
+  <rect x="555" y="85" width="130" height="90" rx="10" class="paper" stroke="var(--rule)"/>
+  <text x="620" y="108" text-anchor="middle" font-size="14" font-weight="600">Falcon</text>
+  <text x="620" y="128" text-anchor="middle" font-size="12" class="dim">now FN-DSA</text>
+  <text x="620" y="147" text-anchor="middle" font-size="12" class="mono">FIPS 206 (draft)</text>
+  <text x="620" y="165" text-anchor="middle" font-size="11" class="dim">NTRU lattice</text>
+  <text x="470" y="210" text-anchor="middle" font-size="11" class="dim">"Dilithium": the Star Trek crystal. Any asymmetric scheme can sign,</text>
+  <text x="470" y="228" text-anchor="middle" font-size="11" class="dim">but these three were designed and tuned for signatures specifically.</text>
+  <text x="470" y="262" text-anchor="middle" font-size="12" class="dim">FrodoKEM reached round 3, was not selected, and is used by the German government.</text>
+</svg>
+<figcaption>The course's advice: if you cannot analyze algorithms yourself, default to the NIST standards. The names changed at standardization; you will see both in the literature.</figcaption>
+</figure>
+
+<h3>CNSA 2.0 — what U.S. national security systems must use</h3>
+<div class="tbl"><table>
+<thead><tr><th>Job</th><th>Algorithm</th><th>Parameter</th><th>Quantum-resistant?</th></tr></thead>
+<tbody>
+<tr><td>Symmetric encryption</td><td>AES</td><td>256-bit keys</td><td><span class="pill ok">already fine</span></td></tr>
+<tr><td>Key establishment</td><td>ML-KEM (Kyber)</td><td>ML-KEM-1024 for all classification levels</td><td><span class="pill ok">yes</span></td></tr>
+<tr><td>Signatures</td><td>ML-DSA (Dilithium)</td><td>ML-DSA-87 for all classification levels</td><td><span class="pill ok">yes</span></td></tr>
+<tr><td>Hashing</td><td>SHA-2</td><td>SHA-384 or SHA-512, not SHA-256</td><td><span class="pill ok">larger digest</span></td></tr>
+<tr><td>Firmware / software signing</td><td>LMS, XMSS</td><td>hash-based, stateful</td><td><span class="pill ok">yes</span></td></tr>
+</tbody></table></div>
+<p>The point of the table: symmetric ciphers and hashes survive with bigger parameters; every public-key slot gets a new algorithm.</p>
+
+<!-- ============================================================ -->
+<h2 id="lattices"><span class="lesson">Lesson 4</span>Lattices, and the problems that are hard on them</h2>
+<p class="lede">RSA hides a secret behind factoring. Lattice cryptography hides it behind a geometry question: find the shortest vector, or the closest one, in a grid too big to look at.</p>
+
+<h3>A lattice is a grid built from basis vectors</h3>
+<p>Take a few linearly independent vectors (lesson 2). Every integer combination of them — add, subtract, repeat — is a lattice point. Those starting vectors are the <strong>basis</strong>. The same lattice has many bases.</p>
+
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-label="Left: a lattice drawn from a short, nearly orthogonal basis with the shortest vector and a closest-vector target marked. Right: the same lattice drawn from a long, skewed basis.">
+  <g transform="translate(20,20)">
+    <text x="160" y="0" text-anchor="middle" font-size="14" font-weight="600">Good basis: short, at right angles</text>
+    <g transform="translate(35,215) scale(1,-1)">
+      <g id="lat1"></g>
+      <path d="M0 0 L36 0" class="ts" stroke-width="3.5" fill="none" marker-end="url(#mk-t)"/>
+      <path d="M0 0 L0 36" class="ts" stroke-width="3.5" fill="none" marker-end="url(#mk-t)"/>
+      <circle cx="93.6" cy="46.8" r="5" class="a"/>
+      <circle cx="108" cy="36" r="8" class="rs" fill="none" stroke-width="2.5"/>
+      <path d="M93.6 46.8 L103 39.8" class="as" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+    </g>
+    <text x="80" y="235" font-size="11" class="t" font-weight="600">b₁ = (1,0)</text>
+    <text x="-2" y="168" font-size="11" class="t" font-weight="600">b₂ = (0,1)</text>
+    <text x="160" y="268" text-anchor="middle" font-size="11" class="dim">SVP: shortest non-zero vector is b₁, length 1</text>
+    <text x="160" y="286" text-anchor="middle" font-size="11" class="dim">CVP: target ● (2.6, 1.3) → nearest lattice point ○ (3, 1)</text>
+  </g>
+  <g transform="translate(380,20)">
+    <text x="160" y="0" text-anchor="middle" font-size="14" font-weight="600">Bad basis: long and skewed — same lattice</text>
+    <g transform="translate(35,215) scale(1,-1)">
+      <g id="lat2"></g>
+      <path d="M0 0 L180 72" class="rs" stroke-width="3.5" fill="none" marker-end="url(#mk-r)"/>
+      <path d="M0 0 L108 36" class="rs" stroke-width="3.5" fill="none" marker-end="url(#mk-r)"/>
+    </g>
+    <text x="225" y="135" font-size="11" class="r" font-weight="600">b₁ = (5,2)</text>
+    <text x="150" y="195" font-size="11" class="r" font-weight="600">b₂ = (3,1)</text>
+    <text x="160" y="268" text-anchor="middle" font-size="11" class="dim">2·b₂ − b₁ = (1,0): the short vector is still there,</text>
+    <text x="160" y="286" text-anchor="middle" font-size="11" class="dim">but nothing about this basis tells you so</text>
+  </g>
+</svg>
+<figcaption>Two dimensions, six points wide: you can solve both problems by eye. Real schemes use hundreds of dimensions and coordinates the size of the modulus. There the picture is gone and only the algebra is left.</figcaption>
+</figure>
+
+<div class="tbl"><table>
+<thead><tr><th>Problem</th><th>Ask</th><th>Used by</th></tr></thead>
+<tbody>
+<tr><td>Shortest vector (SVP)</td><td>Given a basis, find the shortest non-zero lattice vector, measured by a norm (a function giving every vector a positive length).</td><td>NTRU</td></tr>
+<tr><td>Gap-SVP</td><td>Decide only: is the shortest vector ≤ 1, or &gt; β(n)? A yes/no version — most security proofs reduce to this.</td><td>proofs</td></tr>
+<tr><td>Closest vector (CVP)</td><td>Given a point v <em>not</em> on the lattice, find the lattice point nearest it. SVP is roughly the special case where v is the origin.</td><td>GGH (1997)</td></tr>
+<tr><td>Gap-CVP</td><td>Decide: is some lattice point within 1 of v, or are all points farther than β?</td><td>proofs</td></tr>
+<tr><td>Short integer solution (SIS)</td><td>Find a short vector x with A·x = 0 mod q.</td><td>Ajtai (1996, since broken as a cryptosystem)</td></tr>
+<tr><td>Learning with errors (LWE)</td><td>Recover s from noisy linear equations A·s + e mod q.</td><td>Kyber, Dilithium, FrodoKEM</td></tr>
+</tbody></table></div>
+
+<div class="callout">
+<p><strong>Basis reduction is the attack.</strong> LLL and BKZ (both built on Gram-Schmidt orthogonalization) take a bad basis and hunt for a shorter, nearly orthogonal one — turning the right-hand picture into the left. They help, the way number-field sieves help against RSA, but not enough: at real sizes the problems stay infeasible, and no known quantum speed-up changes that.</p>
+</div>
+
+<div class="callout ok">
+<p><strong>GGH</strong> was published in 1997 and ignored for years: correct, but no better than RSA at the time. When quantum resistance became the question, it and several other lattice schemes "had the dust knocked off." A lot of post-quantum cryptography is old mathematics re-examined.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lwe"><span class="lesson">Lesson 4</span>Learning with errors, step by step</h2>
+<p class="lede">"Brilliant in its simplicity." Publish a system of linear equations whose solution is your private key — then break the equations on purpose.</p>
+
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-label="Three stages of building an LWE public key: clean equations that are easy to solve, the same equations with random errors added, and the errored equations reduced mod 23">
+  <defs><marker id="arr8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="currentColor"/></marker></defs>
+  <!-- secret -->
+  <rect x="20" y="15" width="680" height="34" rx="8" class="ab"/>
+  <text x="360" y="37" text-anchor="middle" font-size="14"><tspan class="a" font-weight="600">private key</tspan>  s = (4, 7)  ·  modulus q = 23  ·  errors kept small</text>
+  <!-- stage 1 -->
+  <g transform="translate(20,70)">
+    <rect width="210" height="230" rx="12" class="rb"/>
+    <text x="105" y="26" text-anchor="middle" font-size="13" font-weight="600" class="r">1 — learning without errors</text>
+    <text x="105" y="46" text-anchor="middle" font-size="11" class="dim">this is the public key? no.</text>
+    <g font-size="13" class="mono">
+      <text x="20" y="80">2s₁ + 3s₂ = 29</text>
+      <text x="20" y="104">5s₁ + 1s₂ = 27</text>
+      <text x="20" y="128">3s₁ + 6s₂ = 54</text>
+      <text x="20" y="152">1s₁ + 4s₂ = 32</text>
+    </g>
+    <text x="105" y="190" text-anchor="middle" font-size="11" class="dim">a linear system — Gaussian</text>
+    <text x="105" y="206" text-anchor="middle" font-size="11" class="dim">elimination recovers s in seconds</text>
+  </g>
+  <path d="M235 185 H250" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <!-- stage 2 -->
+  <g transform="translate(255,70)">
+    <rect width="210" height="230" rx="12" class="ab"/>
+    <text x="105" y="26" text-anchor="middle" font-size="13" font-weight="600" class="a">2 — add a random error</text>
+    <text x="105" y="46" text-anchor="middle" font-size="11" class="dim">different e in every row</text>
+    <g font-size="13" class="mono">
+      <text x="20" y="80">29 <tspan class="a" font-weight="600">+1</tspan> = 30</text>
+      <text x="20" y="104">27 <tspan class="a" font-weight="600">−1</tspan> = 26</text>
+      <text x="20" y="128">54 <tspan class="a" font-weight="600">+2</tspan> = 56</text>
+      <text x="20" y="152">32 <tspan class="a" font-weight="600">−2</tspan> = 30</text>
+    </g>
+    <text x="105" y="190" text-anchor="middle" font-size="11" class="dim">no linear-algebra method solves</text>
+    <text x="105" y="206" text-anchor="middle" font-size="11" class="dim">an inconsistent system</text>
+  </g>
+  <path d="M470 185 H485" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <!-- stage 3 -->
+  <g transform="translate(490,70)">
+    <rect width="210" height="230" rx="12" class="tb"/>
+    <text x="105" y="26" text-anchor="middle" font-size="13" font-weight="600" class="t">3 — wrap mod 23, publish</text>
+    <text x="105" y="46" text-anchor="middle" font-size="11" class="dim">the actual public key</text>
+    <g font-size="13" class="mono">
+      <text x="20" y="80">(2, 3) → 7</text>
+      <text x="20" y="104">(5, 1) → 3</text>
+      <text x="20" y="128">(3, 6) → 10</text>
+      <text x="20" y="152">(1, 4) → 7</text>
+    </g>
+    <text x="105" y="190" text-anchor="middle" font-size="11" class="dim">each row: coefficients a, and</text>
+    <text x="105" y="206" text-anchor="middle" font-size="11" class="dim">b = a·s + e mod q</text>
+  </g>
+</svg>
+<figcaption>Only someone who knows the exact errors could strip them and solve. Nobody does — not even the key owner, and it turns out they don't need to.</figcaption>
+</figure>
+
+<h3>Sending one bit</h3>
+<div class="play" id="lwe-play">
+  <h4>Encrypt a bit with the public key above, decrypt with s = (4, 7)</h4>
+  <div class="row">
+    <label>bit to send
+      <span style="display:flex;gap:.4rem">
+        <button type="button" class="bitbtn" data-bit="0" aria-pressed="true">0</button>
+        <button type="button" class="bitbtn" data-bit="1" aria-pressed="false">1</button>
+      </span>
+    </label>
+    <label>rows to add <input id="lwe-rows" type="text" value="1,2,3" style="width:7rem" aria-describedby="lwe-note"></label>
+  </div>
+  <div class="out" id="lwe-out"></div>
+  <p class="note" id="lwe-note">Sender adds some public rows (a summed, b summed mod 23). For a 1, add ⌊q/2⌋ = 11 to b. Receiver computes b − a·s mod 23 and ignores the error: near 0 reads as 0, near 11 reads as 1.</p>
+</div>
+<style>
+.bitbtn{font:inherit;font-family:"IBM Plex Mono",monospace;padding:.35rem .9rem;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+.bitbtn[aria-pressed="true"]{background:var(--violet);color:#fff;border-color:var(--violet)}
+</style>
+
+<figure>
+<svg viewBox="0 0 720 120" role="img" aria-label="Decryption dial: results near 0 decode as bit 0, results near half the modulus decode as bit 1">
+  <text x="20" y="22" font-size="13" font-weight="600">What the receiver sees after b − a·s mod 23</text>
+  <line x1="40" y1="70" x2="680" y2="70" class="rule" stroke-width="6" stroke-linecap="round"/>
+  <line x1="40" y1="70" x2="200" y2="70" class="ts" stroke-width="6" stroke-linecap="round"/>
+  <line x1="520" y1="70" x2="680" y2="70" class="ts" stroke-width="6" stroke-linecap="round"/>
+  <line x1="250" y1="70" x2="470" y2="70" class="vs" stroke-width="6" stroke-linecap="round"/>
+  <g font-size="11" text-anchor="middle" class="dim">
+    <text x="40" y="95">0</text><text x="360" y="95">11 (≈ q/2)</text><text x="680" y="95">22</text>
+  </g>
+  <text x="120" y="55" text-anchor="middle" font-size="12" class="t" font-weight="600">reads as 0</text>
+  <text x="600" y="55" text-anchor="middle" font-size="12" class="t" font-weight="600">reads as 0</text>
+  <text x="360" y="55" text-anchor="middle" font-size="12" class="v" font-weight="600">reads as 1</text>
+  <circle cx="98" cy="70" r="7" class="a"/><text x="98" y="112" text-anchor="middle" font-size="11" class="a" font-weight="600">2 = sent 0</text>
+  <circle cx="418" cy="70" r="7" class="a"/><text x="418" y="112" text-anchor="middle" font-size="11" class="a" font-weight="600">13 = sent 1</text>
+</svg>
+<figcaption>The errors never need removing; the bit is written in the coarse position, the noise in the fine position. That freedom is why keys can carry a different error in every row. The cost is size: dozens of digits to move one bit, which is why real schemes pack many bits per ciphertext.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="security"><span class="lesson">Lesson 4</span>What "secure" means: IND-CPA, IND-CCA, IND-CCA2</h2>
+<p>A scheme is <strong>indistinguishable</strong> if an attacker cannot tell a target ciphertext from random noise. The label says what the attacker was allowed to do first.</p>
+
+<figure>
+<svg viewBox="0 0 720 230" role="img" aria-label="Ladder of attack models: chosen plaintext, chosen ciphertext, adaptive chosen ciphertext, each granting the attacker more oracle access">
+  <g transform="translate(20,20)">
+    <rect width="210" height="180" rx="12" class="vb"/>
+    <text x="105" y="30" text-anchor="middle" font-size="14" font-weight="600">IND-CPA</text>
+    <text x="105" y="50" text-anchor="middle" font-size="12" class="dim">chosen plaintext</text>
+    <text x="105" y="85" text-anchor="middle" font-size="12">attacker has an</text>
+    <text x="105" y="103" text-anchor="middle" font-size="12" font-weight="600">encryption oracle</text>
+    <text x="105" y="135" text-anchor="middle" font-size="11" class="dim">encrypt anything, study</text>
+    <text x="105" y="151" text-anchor="middle" font-size="11" class="dim">plaintext ↔ ciphertext pairs</text>
+  </g>
+  <text x="243" y="115" font-size="20" class="dim">⊂</text>
+  <g transform="translate(255,20)">
+    <rect width="210" height="180" rx="12" class="vb"/>
+    <text x="105" y="30" text-anchor="middle" font-size="14" font-weight="600">IND-CCA</text>
+    <text x="105" y="50" text-anchor="middle" font-size="12" class="dim">chosen ciphertext</text>
+    <text x="105" y="85" text-anchor="middle" font-size="12">also gets a</text>
+    <text x="105" y="103" text-anchor="middle" font-size="12" font-weight="600">decryption oracle</text>
+    <text x="105" y="135" text-anchor="middle" font-size="11" class="dim">decryptions of other messages</text>
+    <text x="105" y="151" text-anchor="middle" font-size="11" class="dim">under the same key, chosen up front</text>
+  </g>
+  <text x="478" y="115" font-size="20" class="dim">⊂</text>
+  <g transform="translate(490,20)">
+    <rect width="210" height="180" rx="12" class="tb"/>
+    <text x="105" y="30" text-anchor="middle" font-size="14" font-weight="600" class="t">IND-CCA2</text>
+    <text x="105" y="50" text-anchor="middle" font-size="12" class="dim">adaptive chosen ciphertext</text>
+    <text x="105" y="85" text-anchor="middle" font-size="12">decryption oracle,</text>
+    <text x="105" y="103" text-anchor="middle" font-size="12" font-weight="600">queried interactively</text>
+    <text x="105" y="135" text-anchor="middle" font-size="11" class="dim">each query chosen after seeing</text>
+    <text x="105" y="151" text-anchor="middle" font-size="11" class="dim">the last answer — the strongest bar</text>
+  </g>
+</svg>
+<figcaption>Each model contains the last, so IND-CCA2 is the claim you want on a KEM. "Indistinguishable under CCA2" means even that attacker cannot separate your ciphertext from random.</figcaption>
+</figure>
+
+<figure>
+<svg viewBox="0 0 720 150" role="img" aria-label="Timeline distinguishing CCA1 from CCA2: both allow decryption queries before the target ciphertext is issued; only CCA2 allows queries after it">
+  <line x1="40" y1="80" x2="680" y2="80" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="330" y="55" width="60" height="50" rx="8" class="ab"/>
+  <text x="360" y="76" text-anchor="middle" font-size="11" class="a" font-weight="600">target</text>
+  <text x="360" y="93" text-anchor="middle" font-size="11" class="a" font-weight="600">issued</text>
+  <text x="180" y="40" text-anchor="middle" font-size="13" font-weight="600">decryption queries before</text>
+  <text x="180" y="120" text-anchor="middle" font-size="12" class="dim">allowed in CCA1 and CCA2</text>
+  <text x="535" y="40" text-anchor="middle" font-size="13" font-weight="600">decryption queries after</text>
+  <text x="535" y="120" text-anchor="middle" font-size="12" class="dim">CCA2 only — anything except the target itself</text>
+  <g class="v"><circle cx="90" cy="80" r="5"/><circle cx="160" cy="80" r="5"/><circle cx="240" cy="80" r="5"/></g>
+  <g class="t"><circle cx="450" cy="80" r="5"/><circle cx="530" cy="80" r="5"/><circle cx="610" cy="80" r="5"/></g>
+  <text x="90" y="22" text-anchor="middle" font-size="11" class="dim">time →</text>
+</svg>
+<figcaption>The "adaptive" in CCA2 is about timing: after the target exists, the attacker may keep probing the decryption oracle, choosing each query from the last answer. That is what a real server offers, since it decrypts whatever arrives.</figcaption>
+</figure>
+
+<div class="callout warn">
+<p><strong>Why it matters for the LWE scheme above.</strong> The step-by-step encryption is only IND-CPA. A CCA2 attacker sends slightly malformed ciphertexts and watches which ones the receiver decodes to 0 or 1, or rejects; each answer leaks a little about the errors, and the errors give up s. ML-KEM closes this with the <strong>Fujisaki–Okamoto transform</strong>: on decryption, recompute the ciphertext from the recovered message and refuse anything that does not match exactly. The wrapper, not the lattice, is what earns the IND-CCA2 claim.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="ntru"><span class="lesson">Lesson 5</span>NTRU: RSA's shape, in a polynomial ring</h2>
+<p class="lede">Hoffstein, Pipher and Silverman, 1996. Reached NIST round 3, not selected, but faster than RSA on the same hardware and one of the most-studied lattice schemes — which makes it the best teaching algorithm in the course.</p>
+
+<figure>
+<svg viewBox="0 0 720 120" role="img" aria-label="NTRU's three parameters: N the ring degree, q the large modulus, p the small modulus, with the toy values used on this page">
+  <rect x="20" y="15" width="210" height="90" rx="12" class="vb"/>
+  <text x="125" y="42" text-anchor="middle" font-size="14" font-weight="600">N — ring degree</text>
+  <text x="125" y="64" text-anchor="middle" font-size="12" class="dim">polynomials live in ℤ[x]/(xᴺ − 1)</text>
+  <text x="125" y="90" text-anchor="middle" font-size="14" class="mono">toy: N = 7</text>
+  <rect x="255" y="15" width="210" height="90" rx="12" class="ab"/>
+  <text x="360" y="42" text-anchor="middle" font-size="14" font-weight="600">q — large modulus</text>
+  <text x="360" y="64" text-anchor="middle" font-size="12" class="dim">public coefficients wrap here</text>
+  <text x="360" y="90" text-anchor="middle" font-size="14" class="mono">toy: q = 41</text>
+  <rect x="490" y="15" width="210" height="90" rx="12" class="tb"/>
+  <text x="595" y="42" text-anchor="middle" font-size="14" font-weight="600">p — small modulus</text>
+  <text x="595" y="64" text-anchor="middle" font-size="12" class="dim">message alphabet, co-prime to q</text>
+  <text x="595" y="90" text-anchor="middle" font-size="14" class="mono">toy: p = 3</text>
+</svg>
+<figcaption>The gap between q and p is the whole trick. Private polynomials have coefficients in {−1, 0, 1}, so products of them stay far below q and never actually wrap.</figcaption>
+</figure>
+
+<h3>Key generation, encryption, decryption — every polynomial shown</h3>
+<figure>
+<svg viewBox="0 0 720 430" role="img" aria-label="NTRU pipeline with the toy parameters: Alice picks f and g, inverts f mod q and mod p, publishes h; Bob encrypts m with random r; Alice recovers m in three steps">
+  <text x="20" y="24" font-size="13" font-weight="600" class="a">Alice — keys</text>
+  <rect x="20" y="34" width="330" height="96" rx="10" class="ab"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="56">f = x⁶ − x⁴ + x³ + x² − 1      (small)</text>
+    <text x="32" y="76">g = x⁶ + x⁴ − x² − x           (small)</text>
+    <text x="32" y="96">f·f_q ≡ 1 (mod q)   f·f_p ≡ 1 (mod p)</text>
+    <text x="32" y="116">f_p = x⁶ − x⁵ + x³ + x² + x + 1</text>
+  </g>
+  <rect x="370" y="34" width="330" height="96" rx="10" class="tb"/>
+  <text x="535" y="56" text-anchor="middle" font-size="12" class="t" font-weight="600">PUBLIC KEY  h = p · f_q · g  (mod q)</text>
+  <text x="535" y="80" text-anchor="middle" font-size="12" class="mono">19x⁶ + 38x⁵ + 6x⁴ + 32x³ + 24x² + 37x + 8</text>
+  <text x="535" y="104" text-anchor="middle" font-size="11" class="dim">looks random mod 41 — f and g are hidden inside it</text>
+  <text x="535" y="121" text-anchor="middle" font-size="11" class="dim">PRIVATE KEY = (f, f_p)</text>
+
+  <text x="20" y="165" font-size="13" font-weight="600" class="v">Bob — encrypt</text>
+  <rect x="20" y="175" width="680" height="78" rx="10" class="vb"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="197">m = −x⁵ + x³ + x − 1        coefficients in {−1,0,1}: the message, mod p</text>
+    <text x="32" y="217">r = x⁶ − x⁵ + x² − 1         fresh random blinding polynomial</text>
+    <text x="32" y="240">e = r·h + m (mod q) = 40x⁶ + 4x⁵ + 37x⁴ + 15x³ + 10x² + 16x + 1</text>
+  </g>
+
+  <text x="20" y="288" font-size="13" font-weight="600" class="a">Alice — decrypt</text>
+  <rect x="20" y="298" width="220" height="112" rx="10" class="ab"/>
+  <text x="130" y="320" text-anchor="middle" font-size="12" font-weight="600">1.  a = f · e  (mod q)</text>
+  <text x="130" y="342" text-anchor="middle" font-size="11" class="mono">3x⁶ + 4x⁵ − 8x⁴ − x³ + x² + x</text>
+  <text x="130" y="366" text-anchor="middle" font-size="11" class="dim">coefficients centred in (−q/2, q/2]:</text>
+  <text x="130" y="382" text-anchor="middle" font-size="11" class="dim">all tiny, so the mod q did nothing</text>
+  <rect x="250" y="298" width="220" height="112" rx="10" class="ab"/>
+  <text x="360" y="320" text-anchor="middle" font-size="12" font-weight="600">2.  b = a  (mod p)</text>
+  <text x="360" y="342" text-anchor="middle" font-size="11" class="mono">x⁵ + x⁴ + 2x³ + x² + x</text>
+  <text x="360" y="366" text-anchor="middle" font-size="11" class="dim">switch worlds: from mod 41</text>
+  <text x="360" y="382" text-anchor="middle" font-size="11" class="dim">to mod 3</text>
+  <rect x="480" y="298" width="220" height="112" rx="10" class="tb"/>
+  <text x="590" y="320" text-anchor="middle" font-size="12" font-weight="600" class="t">3.  c = f_p · b  (mod p)</text>
+  <text x="590" y="342" text-anchor="middle" font-size="11" class="mono">−x⁵ + x³ + x − 1</text>
+  <text x="590" y="366" text-anchor="middle" font-size="11" class="t" font-weight="600">= m  ✓</text>
+  <text x="590" y="382" text-anchor="middle" font-size="11" class="dim">Bob's message, exactly</text>
+</svg>
+<figcaption>Every number here is real: N = 7, q = 41, p = 3, and the multiplications are mod x⁷ − 1. The course's parameter sizes are much larger; the shape is identical.</figcaption>
+</figure>
+
+<h3>Why it works: the p·r·g term is built to vanish</h3>
+<figure>
+<svg viewBox="0 0 720 210" role="img" aria-label="Algebra of NTRU decryption: f times e expands to p r g plus f m; the mod p step deletes the first term; multiplying by the inverse of f mod p leaves m">
+  <g font-size="14" class="mono">
+    <text x="30" y="40">a = f · e = f · (r·h + m) = f · r · <tspan class="a" font-weight="600">p · f_q · g</tspan> + f · m</text>
+    <text x="30" y="80">      = <tspan class="a" font-weight="600">p · r · g</tspan> + f · m        <tspan class="dim" font-size="12">(f · f_q = 1 mod q; nothing wrapped, so true over ℤ)</tspan></text>
+    <text x="30" y="120">b = a mod p  = <tspan class="r" style="text-decoration:line-through">p · r · g</tspan> + f · m  = f · m   <tspan class="dim" font-size="12">(a multiple of p is 0 mod p)</tspan></text>
+    <text x="30" y="160">c = f_p · b  = f_p · f · m = <tspan class="t" font-weight="600">m</tspan>          <tspan class="dim" font-size="12">(f · f_p = 1 mod p)</tspan></text>
+  </g>
+  <rect x="30" y="180" width="660" height="22" rx="6" class="vb"/>
+  <text x="360" y="196" text-anchor="middle" font-size="12">Two inverses of the same f, in two different moduli, do two different jobs.</text>
+</svg>
+<figcaption>The one assumption that can fail: if the coefficients of p·r·g + f·m ever exceed q/2, the "nothing wrapped" step is false and decryption returns garbage. Real parameters make that probability negligible — the same decryption-failure caveat FrodoKEM carries.</figcaption>
+</figure>
+
+<div class="callout">
+<p><strong>Practical notes from the course.</strong> IEEE P1363.1, the lattice public-key standard, recommended NTRU while it was active. Open-source Java implementations exist and a .NET library project was under way; the math is handled for you. Easttom has published NTRU cryptanalysis himself.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="crystals"><span class="lesson">Lesson 6</span>CRYSTALS: Kyber and Dilithium</h2>
+<p class="lede">The NIST standards. Kyber (ML-KEM, FIPS 203) does key encapsulation; Dilithium (ML-DSA, FIPS 204) does signatures. Both are module-lattice schemes built on learning with errors.</p>
+
+<h3>Security levels: the number is a dimension, not a key length</h3>
+<div class="tbl"><table>
+<thead><tr><th>Parameter set</th><th>Module rank k</th><th>Lattice dimension n·k</th><th>NIST level</th><th>Equivalent to</th><th>Public key</th><th>Ciphertext</th></tr></thead>
+<tbody>
+<tr><td>Kyber-512 / ML-KEM-512</td><td>2</td><td>256 × 2 = 512</td><td>1</td><td>AES-128</td><td>800 B</td><td>768 B</td></tr>
+<tr><td>Kyber-768 / ML-KEM-768</td><td>3</td><td>256 × 3 = 768</td><td>3</td><td>AES-192</td><td>1 184 B</td><td>1 088 B</td></tr>
+<tr><td>Kyber-1024 / ML-KEM-1024</td><td>4</td><td>256 × 4 = 1024</td><td>5</td><td>AES-256</td><td>1 568 B</td><td>1 568 B</td></tr>
+</tbody></table></div>
+<p>AES-256 is cleared for classified material, so Kyber-1024 is the "whatever you need" setting — and the one CNSA 2.0 mandates (lesson 3). The course's practical takeaway: ask a vendor which parameter set and which standards they implement; you don't need the math to read this table against their answer.</p>
+
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-label="Module lattice: one fixed ring of degree 256, arranged as a k by k matrix of ring elements; k equals 2, 3 or 4 selects the security level without changing the ring">
+  <text x="20" y="24" font-size="14" font-weight="600">One ring, three sizes — why changing security level needs no re-implementation</text>
+  <text x="20" y="44" font-size="12" class="dim">Every cell is a polynomial in the same ring ℤ₃₃₂₉[x]/(x²⁵⁶ + 1). Only the matrix shape changes.</text>
+  <g transform="translate(40,70)">
+    <text x="40" y="-6" text-anchor="middle" font-size="12" font-weight="600">k = 2</text>
+    <g class="vb"><rect x="0" y="0" width="38" height="38" rx="5"/><rect x="42" y="0" width="38" height="38" rx="5"/><rect x="0" y="42" width="38" height="38" rx="5"/><rect x="42" y="42" width="38" height="38" rx="5"/></g>
+    <text x="40" y="105" text-anchor="middle" font-size="12" class="dim">512 · level 1</text>
+  </g>
+  <g transform="translate(200,70)">
+    <text x="61" y="-6" text-anchor="middle" font-size="12" font-weight="600">k = 3</text>
+    <g class="vb"><rect x="0" y="0" width="38" height="38" rx="5"/><rect x="42" y="0" width="38" height="38" rx="5"/><rect x="84" y="0" width="38" height="38" rx="5"/><rect x="0" y="42" width="38" height="38" rx="5"/><rect x="42" y="42" width="38" height="38" rx="5"/><rect x="84" y="42" width="38" height="38" rx="5"/><rect x="0" y="84" width="38" height="38" rx="5"/><rect x="42" y="84" width="38" height="38" rx="5"/><rect x="84" y="84" width="38" height="38" rx="5"/></g>
+    <text x="61" y="147" text-anchor="middle" font-size="12" class="dim">768 · level 3</text>
+  </g>
+  <g transform="translate(400,70)">
+    <text x="82" y="-6" text-anchor="middle" font-size="12" font-weight="600">k = 4</text>
+    <g class="vb"><rect x="0" y="0" width="38" height="38" rx="5"/><rect x="42" y="0" width="38" height="38" rx="5"/><rect x="84" y="0" width="38" height="38" rx="5"/><rect x="126" y="0" width="38" height="38" rx="5"/><rect x="0" y="42" width="38" height="38" rx="5"/><rect x="42" y="42" width="38" height="38" rx="5"/><rect x="84" y="42" width="38" height="38" rx="5"/><rect x="126" y="42" width="38" height="38" rx="5"/><rect x="0" y="84" width="38" height="38" rx="5"/><rect x="42" y="84" width="38" height="38" rx="5"/><rect x="84" y="84" width="38" height="38" rx="5"/><rect x="126" y="84" width="38" height="38" rx="5"/><rect x="0" y="126" width="38" height="38" rx="5"/><rect x="42" y="126" width="38" height="38" rx="5"/><rect x="84" y="126" width="38" height="38" rx="5"/><rect x="126" y="126" width="38" height="38" rx="5"/></g>
+    <text x="82" y="189" text-anchor="middle" font-size="12" class="dim">1024 · level 5</text>
+  </g>
+  <g transform="translate(585,70)" font-size="11" class="dim">
+    <text x="0" y="14">assumptions only:</text>
+    <text x="0" y="32">· Keccak (SHA-3)</text>
+    <text x="0" y="50">· add / multiply in ℤ_q</text>
+    <text x="0" y="68">· the NTT on the ring</text>
+    <text x="0" y="100">polynomial multiply is</text>
+    <text x="0" y="116">the costly step; the NTT</text>
+    <text x="0" y="132">makes it fast, once</text>
+  </g>
+</svg>
+<figcaption>Module LWE sits between plain LWE (unstructured, big keys) and ring LWE (one polynomial, fastest, most algebraic structure). The designers' argument: if an algebraic attack on ring LWE ever appears, the extra "matrix" layer should blunt it.</figcaption>
+</figure>
+
+<h3>Baby Kyber, fully worked</h3>
+<p>A teaching-size version: ring ℤ₁₇[x]/(x⁴ + 1), k = 2. Same steps as the real thing, four coefficients per polynomial instead of 256.</p>
+
+<figure>
+<svg viewBox="0 0 720 470" role="img" aria-label="Baby Kyber worked example: private key s, public key A and t equals As plus e, encryption of the message 11 as a polynomial into u and v, decryption to the noisy value and rounding back to 1011">
+  <rect x="20" y="15" width="680" height="30" rx="8" class="vb"/>
+  <text x="360" y="35" text-anchor="middle" font-size="13">ring ℤ₁₇[x]/(x⁴+1) · k = 2 · every coefficient below is mod 17 · "small" = {−1, 0, 1}</text>
+
+  <text x="20" y="75" font-size="13" font-weight="600" class="a">Keys</text>
+  <rect x="20" y="84" width="680" height="96" rx="10" class="ab"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="106">s = ( −x³ − x² + x ,  −x³ − x )                       PRIVATE, small</text>
+    <text x="32" y="126">A = [ 6x³+16x²+16x+11   9x³+4x²+6x+3 ]           public, random</text>
+    <text x="32" y="144">    [ 5x³+3x²+10x+1     6x³+x²+9x+15 ]</text>
+    <text x="32" y="166">t = A·s + e = ( 16x³+14x²+x+7 ,  10x³+12x²+12x+5 )   PUBLIC  (e small, then thrown away)</text>
+  </g>
+
+  <text x="20" y="212" font-size="13" font-weight="600" class="v">Encrypt the number 11</text>
+  <rect x="20" y="221" width="680" height="118" rx="10" class="vb"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="243">11 = 1011₂  →  m = 1x³ + 0x² + 1x + 1  →  scale by ⌈q/2⌉ = 9  →  9x³ + 9x + 9</text>
+    <text x="32" y="265">fresh small randomness:  r = ( −x³+x²+x−1 , x²+1 )   e₁ = ( x³−x²+x−1 , x−1 )   e₂ = −x³+x²+1</text>
+    <text x="32" y="292">u = Aᵀ·r + e₁ = ( 14x³+3x²+11x+14 ,  13x³+13x²+13x+3 )</text>
+    <text x="32" y="312">v = t·r + e₂ + 9·m = 5x³ + 11x² + 15x + 1</text>
+    <text x="32" y="330" class="dim">ciphertext = (u, v) — three polynomials to carry four bits</text>
+  </g>
+
+  <text x="20" y="372" font-size="13" font-weight="600" class="t">Decrypt with s</text>
+  <rect x="20" y="381" width="680" height="80" rx="10" class="tb"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="403">noisy = v − s·u = 9x³ + 0x² + 8x + 9      = 9·m + (small leftover noise)</text>
+    <text x="32" y="425">round each coefficient: near 9 → 1, near 0 → 0:   [9, 0, 8, 9] → 1 0 1 1 → 11  ✓</text>
+    <text x="32" y="447" class="dim">the noise (r·e − s·e₁ + e₂) is small because every factor in it is small</text>
+  </g>
+</svg>
+<figcaption>Compare with the LWE playground in lesson 4: same coarse/fine trick, but here one ring multiplication moves four bits at once — 256 in the real scheme. Letters go the same way via their ASCII/Unicode codes.</figcaption>
+</figure>
+
+<h3>The Fujisaki–Okamoto transform, drawn</h3>
+<figure>
+<svg viewBox="0 0 720 260" role="img" aria-label="Fujisaki-Okamoto transform: message and fresh randomness are hashed to derive the encryption coins; the CPA scheme encrypts with those coins; decryption recovers the message, re-derives the coins, re-encrypts, and compares before releasing the key">
+  <text x="20" y="24" font-size="13" font-weight="600" class="v">Encapsulate</text>
+  <rect x="20" y="36" width="130" height="44" rx="8" class="paper" stroke="var(--rule)"/>
+  <text x="85" y="55" text-anchor="middle" font-size="12">random m</text>
+  <text x="85" y="71" text-anchor="middle" font-size="11" class="dim">fresh every time</text>
+  <path d="M155 58 H195" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="200" y="36" width="150" height="44" rx="8" class="vb"/>
+  <text x="275" y="55" text-anchor="middle" font-size="12">hash(m, pk)</text>
+  <text x="275" y="71" text-anchor="middle" font-size="11" class="dim">→ key K and coins ρ</text>
+  <path d="M355 58 H395" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="400" y="36" width="170" height="44" rx="8" class="vb"/>
+  <text x="485" y="55" text-anchor="middle" font-size="12">CPA-encrypt m using ρ</text>
+  <text x="485" y="71" text-anchor="middle" font-size="11" class="dim">no free randomness left</text>
+  <path d="M575 58 H615" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="620" y="36" width="80" height="44" rx="8" class="tb"/>
+  <text x="660" y="62" text-anchor="middle" font-size="12" class="t" font-weight="600">c, K</text>
+
+  <text x="20" y="128" font-size="13" font-weight="600" class="a">Decapsulate</text>
+  <rect x="20" y="140" width="130" height="44" rx="8" class="paper" stroke="var(--rule)"/>
+  <text x="85" y="166" text-anchor="middle" font-size="12">CPA-decrypt c → m′</text>
+  <path d="M155 162 H195" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="200" y="140" width="150" height="44" rx="8" class="vb"/>
+  <text x="275" y="159" text-anchor="middle" font-size="12">hash(m′, pk)</text>
+  <text x="275" y="175" text-anchor="middle" font-size="11" class="dim">→ K′ and ρ′</text>
+  <path d="M355 162 H395" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="400" y="140" width="170" height="44" rx="8" class="ab"/>
+  <text x="485" y="159" text-anchor="middle" font-size="12" font-weight="600">re-encrypt m′ with ρ′</text>
+  <text x="485" y="175" text-anchor="middle" font-size="11" class="dim">does it equal c exactly?</text>
+  <path d="M575 155 H615" class="ts" stroke-width="2" marker-end="url(#mk-t)"/>
+  <path d="M575 170 H615" class="rs" stroke-width="2" marker-end="url(#mk-r)"/>
+  <rect x="620" y="130" width="80" height="26" rx="6" class="tb"/><text x="660" y="148" text-anchor="middle" font-size="11" class="t" font-weight="600">yes → K′</text>
+  <rect x="620" y="162" width="80" height="26" rx="6" class="rb"/><text x="660" y="180" text-anchor="middle" font-size="11" class="r" font-weight="600">no → junk key</text>
+
+  <rect x="20" y="205" width="680" height="44" rx="8" class="vb"/>
+  <text x="360" y="223" text-anchor="middle" font-size="12">A tampered ciphertext fails the re-encryption check and yields an unrelated key, never an error message.</text>
+  <text x="360" y="240" text-anchor="middle" font-size="11" class="dim">Nothing the attacker submits tells them anything about s — that is what promotes IND-CPA to IND-CCA2.</text>
+</svg>
+<figcaption>"Implicit rejection": the decapsulator never says no. Compare the CCA2 timeline in lesson 4 — this is the defence against queries made after the target exists.</figcaption>
+</figure>
+
+<figure>
+<svg viewBox="0 0 720 150" role="img" aria-label="Timeline of Kyber changes through the NIST rounds: round 2 dropped public-key compression and changed the noise and NTT domain; round 3 tuned noise and ciphertext compression and adjusted the FO transform; FIPS 203 followed">
+  <line x1="40" y1="60" x2="680" y2="60" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <g class="v"><circle cx="90" cy="60" r="7"/><circle cx="290" cy="60" r="7"/><circle cx="490" cy="60" r="7"/></g>
+  <circle cx="640" cy="60" r="7" class="t"/>
+  <g font-size="12" font-weight="600" text-anchor="middle"><text x="90" y="40">Round 1</text><text x="290" y="40">Round 2</text><text x="490" y="40">Round 3</text><text x="640" y="40" class="t">FIPS 203</text></g>
+  <g font-size="11" class="dim" text-anchor="middle">
+    <text x="90" y="85">2017 submission</text>
+    <text x="290" y="85">public-key compression removed</text><text x="290" y="100">(it was costing security)</text><text x="290" y="115">q changed · new NTT domain</text><text x="290" y="130">for faster multiplication</text>
+    <text x="490" y="85">noise parameter and ciphertext</text><text x="490" y="100">compression tuned · faster</text><text x="490" y="115">sampling · FO variant adjusted</text>
+    <text x="640" y="85">ML-KEM, 2024</text><text x="640" y="100">read post-round-3</text><text x="640" y="115">papers, not earlier ones</text>
+  </g>
+</svg>
+<figcaption>The course's caution: the algorithm you implement today is the round-3 one. Older analyses describe a slightly different Kyber.</figcaption>
+</figure>
+
+<div class="two">
+<div class="callout ok"><p><strong>Who uses it.</strong> Cloudflare (CIRCL library), Amazon hybrid modes, IBM's 2019 quantum-safe tape drive with Kyber and Dilithium; funding from the European Commission, Swiss NSF, Dutch NWO and others. Ask vendors which PKCS/FIPS standards they implement.</p></div>
+<div class="callout warn"><p><strong>"Kyber is broken" headlines.</strong> The paper the course cites was a side-channel attack on one implementation — reading physical leakage from a device — not a break of the algorithm. Hard to mount, easy to headline. Distinguish the two whenever you read such a claim.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="frodo"><span class="lesson">Lesson 7</span>FrodoKEM: LWE with no ring at all</h2>
+<p class="lede">Round-3 alternate, not standardized by NIST, adopted by the German government and used in embedded devices. It gives up the ring structure entirely: bigger keys, fewer assumptions.</p>
+
+<figure>
+<svg viewBox="0 0 720 200" role="img" aria-label="Spectrum of LWE variants from most structured to least: ring LWE, module LWE, plain LWE, with key size rising and algebraic structure falling">
+  <defs><linearGradient id="grad" x1="0" x2="1"><stop offset="0" stop-color="var(--violet)"/><stop offset="1" stop-color="var(--teal)"/></linearGradient></defs>
+  <rect x="40" y="70" width="640" height="14" rx="7" fill="url(#grad)" opacity=".5"/>
+  <g font-size="14" font-weight="600" text-anchor="middle">
+    <text x="110" y="45">Ring LWE</text><text x="360" y="45">Module LWE</text><text x="610" y="45">Plain LWE</text>
+  </g>
+  <g class="paper" stroke="var(--rule)"><circle cx="110" cy="77" r="11"/><circle cx="360" cy="77" r="11"/><circle cx="610" cy="77" r="11"/></g>
+  <g font-size="11" class="dim" text-anchor="middle">
+    <text x="110" y="110">one polynomial, n = 256+</text><text x="110" y="126">NewHope · NTRU-family</text><text x="110" y="142">fastest, smallest keys</text><text x="110" y="158">most algebraic structure</text>
+    <text x="360" y="110">k×k matrix of ring elements</text><text x="360" y="126">Kyber · Dilithium</text><text x="360" y="142">nearly as fast, one ring</text><text x="360" y="158">structure diluted</text>
+    <text x="610" y="110">n×n matrix of plain integers</text><text x="610" y="126">FrodoKEM</text><text x="610" y="142">public key ~10–21 KB</text><text x="610" y="158">no ring to attack</text>
+  </g>
+  <text x="40" y="188" font-size="11" class="v" font-weight="600">← more structure, more speed</text>
+  <text x="680" y="188" text-anchor="end" font-size="11" class="t" font-weight="600">fewer assumptions, bigger keys →</text>
+</svg>
+<figcaption>FrodoKEM is a bet on conservatism: if algebraic attacks on rings ever appear, it is the scheme they cannot touch. The price is a public key roughly ten times Kyber's.</figcaption>
+</figure>
+
+<div class="tbl"><table>
+<thead><tr><th>Parameter set</th><th>n</th><th>NIST level</th><th>Equivalent to</th><th>Public key</th></tr></thead>
+<tbody>
+<tr><td>FrodoKEM-640</td><td>640</td><td>1</td><td>AES-128</td><td>9 616 B</td></tr>
+<tr><td>FrodoKEM-976</td><td>976</td><td>3</td><td>AES-192</td><td>15 632 B</td></tr>
+<tr><td>FrodoKEM-1344</td><td>1344</td><td>5</td><td>AES-256</td><td>21 520 B</td></tr>
+</tbody></table></div>
+
+<h3>Keygen, encapsulate, decapsulate</h3>
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="FrodoKEM as three boxes: key generation produces seed and B equals AS plus E; encapsulation produces ciphertext C, C prime and shared secret from a random message; decapsulation recovers the message with high probability and re-derives the secret">
+  <rect x="20" y="15" width="215" height="255" rx="12" class="ab"/>
+  <text x="127" y="40" text-anchor="middle" font-size="13" font-weight="600" class="a">KeyGen</text>
+  <g font-size="11" class="mono">
+    <text x="32" y="68">A  ← expand(seed)</text>
+    <text x="32" y="88">S, E  ← small integers</text>
+    <text x="32" y="112">B = A·S + E</text>
+  </g>
+  <text x="127" y="150" text-anchor="middle" font-size="11" class="dim">public: (seed, B)</text>
+  <text x="127" y="166" text-anchor="middle" font-size="11" class="dim">secret: S (+ pk, for the FO check)</text>
+  <text x="127" y="205" text-anchor="middle" font-size="11" class="dim">only the seed is sent, not A —</text>
+  <text x="127" y="221" text-anchor="middle" font-size="11" class="dim">everyone regenerates the same</text>
+  <text x="127" y="237" text-anchor="middle" font-size="11" class="dim">n×n matrix from it</text>
+
+  <rect x="252" y="15" width="215" height="255" rx="12" class="vb"/>
+  <text x="359" y="40" text-anchor="middle" font-size="13" font-weight="600" class="v">Encaps(pk)</text>
+  <g font-size="11" class="mono">
+    <text x="264" y="68">μ  ← random message</text>
+    <text x="264" y="88">S′, E′, E″ ← small (from μ)</text>
+    <text x="264" y="112">C  = S′·A + E′</text>
+    <text x="264" y="132">V  = S′·B + E″</text>
+    <text x="264" y="152">C′ = V + encode(μ)</text>
+    <text x="264" y="180">ss = hash(μ, C, C′)</text>
+  </g>
+  <text x="359" y="215" text-anchor="middle" font-size="11" class="dim">ciphertext (C, C′) goes out;</text>
+  <text x="359" y="231" text-anchor="middle" font-size="11" class="dim">shared secret ss stays</text>
+
+  <rect x="484" y="15" width="216" height="255" rx="12" class="tb"/>
+  <text x="592" y="40" text-anchor="middle" font-size="13" font-weight="600" class="t">Decaps(ct, sk)</text>
+  <g font-size="11" class="mono">
+    <text x="496" y="68">M  = C′ − C·S</text>
+    <text x="496" y="88">   = E″ + E′… + encode(μ)</text>
+    <text x="496" y="112">μ′ = decode(M)</text>
+    <text x="496" y="136">re-encaps from μ′,</text>
+    <text x="496" y="152">compare to (C, C′)</text>
+    <text x="496" y="180">ss = hash(μ′, C, C′)</text>
+  </g>
+  <text x="592" y="215" text-anchor="middle" font-size="11" class="dim">"should recover" — a negligible</text>
+  <text x="592" y="231" text-anchor="middle" font-size="11" class="dim">chance the noise crosses a rounding</text>
+  <text x="592" y="247" text-anchor="middle" font-size="11" class="dim">boundary and the two sides disagree</text>
+</svg>
+<figcaption>Same skeleton as Kyber, with matrices of integers where Kyber has polynomials, and the same FO check wrapping it. FrodoKEM is designed IND-CCA at all three levels; the tiny decryption-failure rate is a property of every noise-based KEM.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="others"><span class="lesson">Lesson 8</span>The other families</h2>
+<p class="lede">Lattices took most of the slots, but four other mathematical families were in the race. Knowing them tells you what the NIST alternates and the hash-based standard actually are.</p>
+
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-label="Map of post-quantum families other than lattices: multivariate, code-based, hash-based, isogeny; each with its hard problem and its members marked as standardized, alternate, broken, or historical">
+  <g transform="translate(20,15)">
+    <rect width="330" height="145" rx="12" class="vb"/>
+    <text x="14" y="26" font-size="14" font-weight="600">Multivariate quadratic</text>
+    <text x="14" y="46" font-size="11" class="dim">hard problem: solve many quadratic equations at once</text>
+    <g font-size="12">
+      <text x="14" y="76">Matsumoto–Imai 1988</text><rect x="200" y="64" width="60" height="18" rx="9" class="rb"/><text x="230" y="77" text-anchor="middle" font-size="10" class="r" font-weight="600">broken</text>
+      <text x="14" y="100">HFE (Eurocrypt 1996)</text><rect x="200" y="88" width="90" height="18" rx="9" class="ab"/><text x="245" y="101" text-anchor="middle" font-size="10" class="a" font-weight="600">MI improved</text>
+      <text x="14" y="124">SFLASH (NESSIE 2000–03)</text><rect x="200" y="112" width="110" height="18" rx="9" class="rb"/><text x="255" y="125" text-anchor="middle" font-size="10" class="r" font-weight="600">MI variant · broken</text>
+    </g>
+  </g>
+  <g transform="translate(370,15)">
+    <rect width="330" height="145" rx="12" class="tb"/>
+    <text x="14" y="26" font-size="14" font-weight="600">Code-based</text>
+    <text x="14" y="46" font-size="11" class="dim">hard problem: decode a general linear error-correcting code</text>
+    <g font-size="12">
+      <text x="14" y="76">McEliece 1978</text><rect x="200" y="64" width="120" height="18" rx="9" class="tb"/><text x="260" y="77" text-anchor="middle" font-size="10" class="t" font-weight="600">oldest PQ · NIST alt.</text>
+      <text x="14" y="100">Niederreiter 1986</text><rect x="200" y="88" width="120" height="18" rx="9" class="ab"/><text x="260" y="101" text-anchor="middle" font-size="10" class="a" font-weight="600">faster dual form</text>
+      <text x="14" y="124">HQC (2025 NIST pick)</text><rect x="200" y="112" width="120" height="18" rx="9" class="tb"/><text x="260" y="125" text-anchor="middle" font-size="10" class="t" font-weight="600">standard-track</text>
+    </g>
+  </g>
+  <g transform="translate(20,175)">
+    <rect width="330" height="140" rx="12" class="ab"/>
+    <text x="14" y="26" font-size="14" font-weight="600">Hash-based</text>
+    <text x="14" y="46" font-size="11" class="dim">hard problem: invert or collide a hash, nothing more</text>
+    <g font-size="12">
+      <text x="14" y="76">Lamport 1979</text><rect x="200" y="64" width="110" height="18" rx="9" class="ab"/><text x="255" y="77" text-anchor="middle" font-size="10" class="a" font-weight="600">one-time · huge</text>
+      <text x="14" y="100">SWIFFT (FFT hash family)</text><rect x="200" y="88" width="110" height="18" rx="9" class="ab"/><text x="255" y="101" text-anchor="middle" font-size="10" class="a" font-weight="600">provable hash</text>
+      <text x="14" y="124">SPHINCS+ → SLH-DSA</text><rect x="200" y="112" width="110" height="18" rx="9" class="tb"/><text x="255" y="125" text-anchor="middle" font-size="10" class="t" font-weight="600">FIPS 205</text>
+    </g>
+  </g>
+  <g transform="translate(370,175)">
+    <rect width="330" height="140" rx="12" class="rb"/>
+    <text x="14" y="26" font-size="14" font-weight="600">Isogeny-based</text>
+    <text x="14" y="46" font-size="11" class="dim">hard problem: find the map between two given curves</text>
+    <g font-size="12">
+      <text x="14" y="76">SIDH / SIKE</text><rect x="200" y="64" width="120" height="18" rx="9" class="rb"/><text x="260" y="77" text-anchor="middle" font-size="10" class="r" font-weight="600">broken 2022</text>
+      <text x="14" y="100">CSIDH, SQIsign</text><rect x="200" y="88" width="120" height="18" rx="9" class="ab"/><text x="260" y="101" text-anchor="middle" font-size="10" class="a" font-weight="600">still standing</text>
+      <text x="14" y="124" class="dim">tiny keys, slow, young math</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Status pills are these notes' additions, not the course's. The course presents supersingular isogeny key exchange as quantum-resistant; SIKE was broken classically in 2022 (Castryck–Decru), which is why it is absent from the standards. The isogeny idea survives in SQIsign.</figcaption>
+</figure>
+
+<h3>Multivariate: a trapdoor made of quadratics</h3>
+<figure>
+<svg viewBox="0 0 720 165" role="img" aria-label="Multivariate scheme structure: a public system of quadratic polynomials is the composition of two secret affine maps around an easily invertible central map">
+  <rect x="20" y="40" width="110" height="60" rx="10" class="ab"/><text x="75" y="66" text-anchor="middle" font-size="12" font-weight="600">S</text><text x="75" y="84" text-anchor="middle" font-size="11" class="dim">secret affine</text>
+  <path d="M135 70 H175" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="180" y="40" width="160" height="60" rx="10" class="vb"/><text x="260" y="66" text-anchor="middle" font-size="12" font-weight="600">F — central map</text><text x="260" y="84" text-anchor="middle" font-size="11" class="dim">easy to invert if you know it</text>
+  <path d="M345 70 H385" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="390" y="40" width="110" height="60" rx="10" class="ab"/><text x="445" y="66" text-anchor="middle" font-size="12" font-weight="600">T</text><text x="445" y="84" text-anchor="middle" font-size="11" class="dim">secret affine</text>
+  <path d="M505 70 H545" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="550" y="30" width="150" height="80" rx="10" class="tb"/><text x="625" y="58" text-anchor="middle" font-size="12" font-weight="600" class="t">P = T ∘ F ∘ S</text><text x="625" y="76" text-anchor="middle" font-size="11" class="dim">public: n quadratics</text><text x="625" y="92" text-anchor="middle" font-size="11" class="dim">p₁…pₙ in n variables</text>
+  <text x="360" y="132" text-anchor="middle" font-size="11" class="dim">Mixing with S and T hides the simple F.</text>
+  <text x="360" y="150" text-anchor="middle" font-size="11" class="dim">The breaks of MI and SFLASH found ways to peel S and T off — the "extra steps" were the security.</text>
+</svg>
+</figure>
+
+<h3>Code-based: hide an error-correcting code, then add errors</h3>
+<figure>
+<svg viewBox="0 0 720 200" role="img" aria-label="McEliece idea: a Goppa code with a fast decoder is disguised by secret scrambling and permutation matrices; encryption adds t random errors that only the disguised decoder can remove">
+  <rect x="20" y="20" width="200" height="70" rx="10" class="ab"/>
+  <text x="120" y="45" text-anchor="middle" font-size="12" font-weight="600">secret: Goppa code G</text>
+  <text x="120" y="63" text-anchor="middle" font-size="11" class="dim">with a fast decoder that fixes</text>
+  <text x="120" y="79" text-anchor="middle" font-size="11" class="dim">up to t errors</text>
+  <path d="M225 55 H265" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="270" y="20" width="200" height="70" rx="10" class="vb"/>
+  <text x="370" y="45" text-anchor="middle" font-size="12" font-weight="600">disguise: Ĝ = S · G · P</text>
+  <text x="370" y="63" text-anchor="middle" font-size="11" class="dim">S invertible scramble,</text>
+  <text x="370" y="79" text-anchor="middle" font-size="11" class="dim">P permutation — both secret</text>
+  <path d="M475 55 H515" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+  <rect x="520" y="20" width="180" height="70" rx="10" class="tb"/>
+  <text x="610" y="45" text-anchor="middle" font-size="12" font-weight="600" class="t">public key: Ĝ, t</text>
+  <text x="610" y="63" text-anchor="middle" font-size="11" class="dim">looks like a random code —</text>
+  <text x="610" y="79" text-anchor="middle" font-size="11" class="dim">no decoder in sight</text>
+  <rect x="20" y="115" width="680" height="70" rx="10" class="paper" stroke="var(--rule)"/>
+  <g font-size="12" class="mono">
+    <text x="32" y="140">encrypt:  c = m·Ĝ + z<tspan dx="40" class="dim">z = a random word with exactly t ones</tspan></text>
+    <text x="32" y="162">decrypt:  undo P, run the Goppa decoder (removes z), undo S → m</text>
+  </g>
+</svg>
+<figcaption>Decoding a random-looking linear code is NP-hard; decoding one you know is a Goppa code is fast. Niederreiter (1986) is the same trapdoor expressed through the parity-check matrix H instead of G — faster, and the form Classic McEliece actually uses.</figcaption>
+</figure>
+
+<h3>Hash-based: Lamport's one-time signature</h3>
+<figure>
+<svg viewBox="0 0 720 275" role="img" aria-label="Lamport signature: 256 pairs of random secrets, their hashes published; to sign, reveal one secret from each pair chosen by the message hash bits; verifier hashes the revealed secrets and compares">
+  <text x="20" y="24" font-size="13" font-weight="600">Key pair for one signature of a 256-bit message hash</text>
+  <g transform="translate(20,40)">
+    <text x="0" y="14" font-size="11" class="dim">bit position →</text>
+    <g font-size="10" text-anchor="middle" class="dim"><text x="140" y="14">1</text><text x="200" y="14">2</text><text x="260" y="14">3</text><text x="320" y="14">…</text><text x="380" y="14">256</text></g>
+    <text x="0" y="46" font-size="11" class="a" font-weight="600">private: pairs</text>
+    <text x="0" y="60" font-size="10" class="dim">random 256-bit values</text>
+    <g class="ab"><rect x="120" y="28" width="40" height="18" rx="4"/><rect x="120" y="50" width="40" height="18" rx="4"/><rect x="180" y="28" width="40" height="18" rx="4"/><rect x="180" y="50" width="40" height="18" rx="4"/><rect x="240" y="28" width="40" height="18" rx="4"/><rect x="240" y="50" width="40" height="18" rx="4"/><rect x="360" y="28" width="40" height="18" rx="4"/><rect x="360" y="50" width="40" height="18" rx="4"/></g>
+    <g font-size="9" text-anchor="middle" class="a"><text x="140" y="41">x₁,₀</text><text x="140" y="63">x₁,₁</text><text x="200" y="41">x₂,₀</text><text x="200" y="63">x₂,₁</text><text x="260" y="41">x₃,₀</text><text x="260" y="63">x₃,₁</text><text x="380" y="41">x₂₅₆,₀</text><text x="380" y="63">x₂₅₆,₁</text></g>
+    <text x="0" y="104" font-size="11" class="t" font-weight="600">public: hashes</text>
+    <g class="tb"><rect x="120" y="86" width="40" height="18" rx="4"/><rect x="120" y="108" width="40" height="18" rx="4"/><rect x="180" y="86" width="40" height="18" rx="4"/><rect x="180" y="108" width="40" height="18" rx="4"/><rect x="240" y="86" width="40" height="18" rx="4"/><rect x="240" y="108" width="40" height="18" rx="4"/><rect x="360" y="86" width="40" height="18" rx="4"/><rect x="360" y="108" width="40" height="18" rx="4"/></g>
+    <g font-size="9" text-anchor="middle" class="t"><text x="140" y="99">H(x₁,₀)</text><text x="140" y="121">H(x₁,₁)</text><text x="200" y="99">H(x₂,₀)</text><text x="200" y="121">H(x₂,₁)</text><text x="260" y="99">H(x₃,₀)</text><text x="260" y="121">H(x₃,₁)</text><text x="380" y="99">H(x₂₅₆,₀)</text><text x="380" y="121">H(x₂₅₆,₁)</text></g>
+    <!-- signing highlight: message hash bits 1 0 1 ... 1 -->
+    <text x="0" y="160" font-size="11" class="v" font-weight="600">sign: H(msg) = 1 0 1 … 1</text>
+    <text x="0" y="176" font-size="10" class="dim">reveal one of each pair</text>
+    <g class="vs" fill="none" stroke-width="2.5"><rect x="118" y="48" width="44" height="22" rx="5"/><rect x="178" y="26" width="44" height="22" rx="5"/><rect x="238" y="48" width="44" height="22" rx="5"/><rect x="358" y="48" width="44" height="22" rx="5"/></g>
+    <text x="440" y="46" font-size="11" class="dim">verify: hash each revealed</text>
+    <text x="440" y="62" font-size="11" class="dim">value, check it matches the</text>
+    <text x="440" y="78" font-size="11" class="dim">published hash in that slot</text>
+    <text x="440" y="110" font-size="11" class="dim">private key: 2·256·256 bits = 16 KiB</text>
+    <text x="440" y="126" font-size="11" class="dim">public key: 16 KiB · signature: 8 KiB</text>
+    <text x="440" y="158" font-size="11" class="r" font-weight="600">one use only — a second signature</text>
+    <text x="440" y="174" font-size="11" class="r" font-weight="600">reveals both halves of some pairs</text>
+  </g>
+  <text x="20" y="248" font-size="11" class="dim">Only assumption: the hash is one-way.</text>
+  <text x="20" y="266" font-size="11" class="dim">Merkle trees over many such keys give XMSS, LMS and SPHINCS+ — the hash-based schemes in CNSA 2.0 and FIPS 205.</text>
+</svg>
+<figcaption>Revealing a preimage proves you held it; hashes aren't reversible, but matching one is proof enough. The key sizes above are recomputed from the construction (the transcript's kilobyte figures don't reconcile).</figcaption>
+</figure>
+
+<h3>SWIFFT: a hash built from the FFT</h3>
+<figure>
+<svg viewBox="0 0 720 120" role="img" aria-label="SWIFFT pipeline: message split into m polynomials, FFT of each, pointwise multiply by fixed coefficients, inverse FFT, sum and output bits">
+  <g font-size="11">
+    <rect x="20" y="30" width="120" height="50" rx="8" class="paper" stroke="var(--rule)"/><text x="80" y="52" text-anchor="middle" font-weight="600">message</text><text x="80" y="68" text-anchor="middle" class="dim">→ m polynomials pᵢ ∈ R</text>
+    <path d="M145 55 H165" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+    <rect x="170" y="30" width="110" height="50" rx="8" class="vb"/><text x="225" y="52" text-anchor="middle" font-weight="600">FFT each pᵢ</text><text x="225" y="68" text-anchor="middle" class="dim">to frequency domain</text>
+    <path d="M285 55 H305" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+    <rect x="310" y="30" width="130" height="50" rx="8" class="vb"/><text x="375" y="52" text-anchor="middle" font-weight="600">× fixed aᵢ, pointwise</text><text x="375" y="68" text-anchor="middle" class="dim">the "key" of the hash</text>
+    <path d="M445 55 H465" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+    <rect x="470" y="30" width="110" height="50" rx="8" class="vb"/><text x="525" y="52" text-anchor="middle" font-weight="600">inverse FFT</text><text x="525" y="68" text-anchor="middle" class="dim">back to polynomials</text>
+    <path d="M585 55 H605" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
+    <rect x="610" y="30" width="90" height="50" rx="8" class="tb"/><text x="655" y="52" text-anchor="middle" font-weight="600" class="t">Σ, then bits</text><text x="655" y="68" text-anchor="middle" class="dim">the digest</text>
+  </g>
+  <text x="360" y="108" text-anchor="middle" font-size="11" class="dim">FFT: O(n log n) instead of O(n²) for the DFT. Collision-finding provably reduces to a worst-case lattice problem in the ring.</text>
+</svg>
+<figcaption>SWIFFT is a family of provably secure hashes, not an encryption scheme — a reminder that hashes and one-way functions do useful cryptographic work without ever being "decrypted".</figcaption>
+</figure>
+
+<h3>Isogenies, in one picture</h3>
+<figure>
+<svg viewBox="0 0 720 200" role="img" aria-label="Isogeny key exchange as a commutative square: two curves and two isogenies, each party walks their own secret path and both arrive at curves with the same j-invariant">
+  <g class="paper" stroke="var(--rule)">
+    <rect x="60" y="30" width="110" height="40" rx="8"/><rect x="550" y="30" width="110" height="40" rx="8"/><rect x="60" y="130" width="110" height="40" rx="8"/><rect x="550" y="130" width="110" height="40" rx="8"/>
+  </g>
+  <g font-size="12" text-anchor="middle"><text x="115" y="55">E₀ (public)</text><text x="605" y="55">E_A = φ_A(E₀)</text><text x="115" y="155">E_B = φ_B(E₀)</text><text x="605" y="155" class="t" font-weight="600">E_AB ≅ E_BA</text></g>
+  <path d="M175 50 H545" class="as" stroke-width="2" marker-end="url(#mk-a)"/><text x="360" y="42" text-anchor="middle" font-size="11" class="a">Alice's secret isogeny φ_A</text>
+  <path d="M115 75 V125" class="vs" stroke-width="2" marker-end="url(#mk-v)"/><text x="30" y="105" font-size="11" class="v">Bob φ_B</text>
+  <path d="M175 150 H545" class="as" stroke-width="2" marker-end="url(#mk-a)"/><text x="360" y="172" text-anchor="middle" font-size="11" class="a">Alice again, from Bob's curve</text>
+  <path d="M605 75 V125" class="vs" stroke-width="2" marker-end="url(#mk-v)"/><text x="620" y="105" font-size="11" class="v">Bob again</text>
+  <text x="360" y="110" text-anchor="middle" font-size="11" class="dim">shared secret = j(E_AB): isomorphic curves share a j-invariant</text>
+</svg>
+<figcaption>Diffie-Hellman with curves in place of numbers and isogenies (surjective group maps with finite kernel) in place of exponentiation. Elegant and tiny-keyed; the SIDH version fell to a classical attack in 2022 because the protocol published extra torsion-point data that let attackers recover the secret path.</figcaption>
+</figure>
+
+<div class="callout">
+<p><strong>Where the course leaves you.</strong> Lattice schemes on LWE are the standards and the bulk of deployment. Code-based (Classic McEliece, HQC) and hash-based (SLH-DSA, LMS, XMSS) are the structurally different backups. Multivariate is mostly history; isogenies are research again. Knowing the map is what lets you read a vendor's data sheet.</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+  // mod-5 number line ticks
+  var g=document.getElementById('ticks'); if(g){
+    for(var i=0;i<=15;i++){
+      var x=i*25, ns='http://www.w3.org/2000/svg';
+      var l=document.createElementNS(ns,'line'); l.setAttribute('x1',x);l.setAttribute('x2',x);l.setAttribute('y1',64);l.setAttribute('y2',76);
+      l.setAttribute('stroke','var(--ink)');l.setAttribute('stroke-width','1.5'); g.appendChild(l);
+      var t=document.createElementNS(ns,'text'); t.setAttribute('x',x);t.setAttribute('y',95);t.textContent=i; g.appendChild(t);
+      var hi=(i%5===3);
+      if(i===8||i===13){
+        var c=document.createElementNS(ns,'circle'); c.setAttribute('cx',x);c.setAttribute('cy',70);c.setAttribute('r',7);c.setAttribute('fill','var(--violet)'); g.appendChild(c);
+        var lab=document.createElementNS(ns,'text'); lab.setAttribute('x',x);lab.setAttribute('y',50);lab.setAttribute('font-weight','600');lab.setAttribute('fill','var(--violet)');lab.textContent=i+' → 3'; g.appendChild(lab);
+      } else if(hi){
+        var c2=document.createElementNS(ns,'circle'); c2.setAttribute('cx',x);c2.setAttribute('cy',70);c2.setAttribute('r',4);c2.setAttribute('fill','var(--violet)'); g.appendChild(c2);
+      }
+      if(i%5===0){ var b=document.createElementNS(ns,'text'); b.setAttribute('x',x);b.setAttribute('y',120);b.setAttribute('fill','var(--ink-2)');b.setAttribute('font-size','11');b.textContent='wrap'; g.appendChild(b); }
+    }
+  }
+
+  // RSA playground
+  function isPrime(n){ if(n<2)return false; for(var i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+  function gcd(a,b){ while(b){ var t=a%b; a=b; b=t;} return a; }
+  function modpow(b,e,m){ b=BigInt(b); e=BigInt(e); m=BigInt(m); var r=1n; b%=m; while(e>0n){ if(e&1n) r=r*b%m; b=b*b%m; e>>=1n;} return r; }
+  function modinv(e,m){ for(var d=1; d<m; d++) if((d*e)%m===1) return d; return null; }
+  var ids=['p','q','e','msg']; var out=document.getElementById('rsa-out'); var note=document.getElementById('rsa-note');
+  function stat(v,l){ return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'; }
+  function run(){
+    var p=+document.getElementById('p').value, q=+document.getElementById('q').value, e=+document.getElementById('e').value, m=+document.getElementById('msg').value;
+    var err=[];
+    if(!isPrime(p)) err.push('p must be prime'); if(!isPrime(q)) err.push('q must be prime'); if(p===q) err.push('p and q must differ');
+    var n=p*q, phi=(p-1)*(q-1);
+    if(!err.length){ if(e>=phi||e<2) err.push('e must be between 2 and '+(phi-1)); else if(gcd(e,phi)!==1) err.push('e must share no factor with φ(n) = '+phi); if(m>=n) err.push('message must be smaller than n = '+n); }
+    if(err.length){ out.innerHTML=''; note.innerHTML='<span class="err">'+err.join('. ')+'.</span>'; return; }
+    var d=modinv(e,phi); var c=modpow(m,e,n); var back=modpow(c,d,n);
+    out.innerHTML=stat(n,'n = p·q')+stat(phi,'φ(n) = (p−1)(q−1)')+stat(d,'d, since '+d+'·'+e+' ≡ 1 mod '+phi)+stat(c,m+'^'+e+' mod '+n+' → ciphertext')+stat(back,c+'^'+d+' mod '+n+' → recovered');
+    note.textContent='Public key ('+e+', '+n+'). Private key ('+d+', '+n+'). Factor '+n+' and d falls out in moments.';
+  }
+  ids.forEach(function(id){ document.getElementById(id).addEventListener('input',run); });
+  run();
+
+  // lattice dots
+  function dots(id,ux,uy){ var g=document.getElementById(id); if(!g) return; var ns='http://www.w3.org/2000/svg';
+    for(var x=0;x<=7;x++) for(var y=0;y<=5;y++){ var c=document.createElementNS(ns,'circle'); c.setAttribute('cx',x*36); c.setAttribute('cy',y*36); c.setAttribute('r',2.6); c.setAttribute('fill','var(--ink-2)'); c.setAttribute('opacity','.55'); g.appendChild(c);} }
+  dots('lat1'); dots('lat2');
+
+  // LWE playground
+  var q=23, s=[4,7], pub=[[[2,3],7],[[5,1],3],[[3,6],10],[[1,4],7]];
+  var bit=0; var lout=document.getElementById('lwe-out');
+  function lwe(){
+    var raw=document.getElementById('lwe-rows').value.split(/[,\s]+/).filter(Boolean).map(Number);
+    var rows=raw.filter(function(i){return i>=1&&i<=4;});
+    if(!rows.length){ lout.innerHTML='<div class="stat"><span class="err">pick at least one row, 1–4</span></div>'; return; }
+    var A=[0,0], B=0; rows.forEach(function(i){ A[0]+=pub[i-1][0][0]; A[1]+=pub[i-1][0][1]; B+=pub[i-1][1]; });
+    B%=q; var Bsent=(B+(bit?11:0))%q;
+    var dec=((Bsent-(A[0]*s[0]+A[1]*s[1]))%q+q)%q;
+    var dist0=Math.min(dec,q-dec), dist1=Math.abs(dec-11); var read=dist1<dist0?1:0;
+    lout.innerHTML=stat('('+A[0]+', '+A[1]+')','a summed')+stat(B,'b summed mod 23')+stat(Bsent, bit?'b + 11 mod 23 → sent':'b unchanged → sent')+stat(dec,'receiver: b − a·s mod 23')+'<div class="stat"><b class="'+(read===bit?'t':'r')+'">'+read+'</b><span>decoded ('+(read===bit?'correct':'wrong — too many rows, error grew')+')</span></div>';
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.bitbtn'),function(b){ b.addEventListener('click',function(){ bit=+b.dataset.bit; Array.prototype.forEach.call(document.querySelectorAll('.bitbtn'),function(x){x.setAttribute('aria-pressed',String(+x.dataset.bit===bit));}); lwe(); }); });
+  document.getElementById('lwe-rows').addEventListener('input',lwe); lwe();
+})();
+</script>
+</body>
+</html>
