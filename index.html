@@ -164,12 +164,12 @@ svg .white{fill:var(--paper)}
 <header class="hero">
   <h1>Quantum Cryptography<br>illustrated notes</h1>
   <p>Dr. Chuck Easttom's Pearson course on LinkedIn Learning. The whole course, redrawn as pictures: why today's public-key math falls to a quantum computer, the arithmetic RSA and Diffie-Hellman run on, the algebra the lattice schemes are built from, what NIST standardized, how a lattice hides a key, and the four algorithm families — NTRU, CRYSTALS, FrodoKEM, and the rest — worked through with real numbers.</p>
-  <p style="margin-top:.8rem"><strong>Six of the diagrams are live.</strong> Drag the lattice target, re-roll the NTRU key, turn Kyber's noise up until decryption fails, or brute-force a Diffie-Hellman exponent — the ones marked <span class="demo">demo</span> below.</p>
+  <p style="margin-top:.8rem"><strong>Twelve of the diagrams are live.</strong> Drag the lattice target and then reduce the basis out from under it, watch the period that breaks RSA, re-roll the NTRU key, tamper with a ciphertext and get rejected, or sign twice with a one-time key and forge the result — the ones marked <span class="demo">demo</span> below.</p>
   <div class="meta">Course: 2h 4m · Advanced · released 26 Mar 2026 · <a href="https://www.linkedin.com/learning/quantum-cryptography-by-pearson?u=16599444">course page</a></div>
   <nav class="toc" aria-label="Contents">
     <strong>Contents</strong>
     <ol>
-      <li><a href="#threat">The threat: which locks break, and why</a></li>
+      <li><a href="#threat">The threat: which locks break, and why</a><span class="demo">demo</span></li>
       <li><a href="#modular">Modular arithmetic, congruence, the totient</a></li>
       <li><a href="#rsa">RSA, worked with 17 and 11</a><span class="demo">demo</span></li>
       <li><a href="#dh">Diffie-Hellman</a><span class="demo">demo</span></li>
@@ -183,8 +183,8 @@ svg .white{fill:var(--paper)}
       <li><a href="#security">IND-CPA / CCA / CCA2</a></li>
       <li><a href="#ntru">NTRU, fully worked</a><span class="demo">demo</span></li>
       <li><a href="#crystals">CRYSTALS: Kyber and Dilithium</a><span class="demo">demo</span></li>
-      <li><a href="#frodo">FrodoKEM</a></li>
-      <li><a href="#others">The other families</a></li>
+      <li><a href="#frodo">FrodoKEM</a><span class="demo">demo</span></li>
+      <li><a href="#others">The other families</a><span class="demo">demo</span></li>
     </ol>
   </nav>
 </header>
@@ -231,6 +231,19 @@ svg .white{fill:var(--paper)}
 
 <div class="callout warn">
 <p><strong>Where it bites.</strong> Nearly every network connection starts with an asymmetric handshake: e-commerce, banking, VPNs, plane tickets, online classes. Cryptocurrencies link blocks with hashes (fine) but prove ownership with public-key signatures (not fine).</p>
+
+<h3>"Weakened, not broken" — what Grover's algorithm costs you <span class="demo">demo</span></h3>
+<p>The last two rows of that table need a number attached. Grover's algorithm searches an unstructured space of size N in about √N steps, so a k-bit key that took 2<sup>k</sup> guesses classically takes about 2<sup>k/2</sup> quantum iterations. That is a devastating speed-up in the abstract and a much milder one in practice, because those iterations are strictly sequential — you cannot buy your way out with more machines the way a classical attacker can.</p>
+
+<div class="play" id="grover-play">
+  <h4>Key size against a quantum search</h4>
+  <div class="row">
+    <label>key size <span id="grover-klab">128</span> bits <input id="grover-k" type="range" min="56" max="256" step="8" value="128"></label>
+    <label>iterations per second 10^<span id="grover-rlab">9</span> <input id="grover-r" type="range" min="3" max="15" step="1" value="9"></label>
+  </div>
+  <div class="out" id="grover-out" aria-live="polite"></div>
+  <p class="note" id="grover-note"></p>
+</div>
 </div>
 
 <p>Candidate replacements named in the course: <strong>CRYSTALS-Kyber</strong> (NIST standard), <strong>FrodoKEM</strong> (reached round 3, not selected, used by the German government), and <strong>NTRU</strong> (one of the most-studied lattice schemes).</p>
@@ -408,6 +421,26 @@ svg .white{fill:var(--paper)}
   </div>
   <div class="out" id="rsa-out"></div>
   <p class="note" id="rsa-note">d is found with the extended Euclidean algorithm — the same one real implementations use, just with two-digit primes.</p>
+</div>
+
+<h3>What Shor's algorithm actually does <span class="demo">demo</span></h3>
+<p>"A quantum computer factors n" is where most accounts stop. Here is the machinery. Pick any a with no factor in common with n and look at the sequence a¹, a², a³ … mod n. It repeats — every such sequence does, because there are only finitely many values and each one determines the next. Call the repeat length the <strong>period</strong> r. If you know r, and r is even, then a^(r/2) is a square root of 1 mod n, and gcd(a^(r/2) ± 1, n) hands you the factors by ordinary arithmetic.</p>
+<p>Everything in that paragraph is classical, and everything below runs classically in your browser. The <em>only</em> thing a quantum computer contributes is finding r fast: the sequence's period is a frequency, a quantum Fourier transform reads frequencies, and that step drops from exponential to polynomial time. That single substitution is what breaks RSA.</p>
+
+<div class="play" id="shor-play">
+  <h4>Find the period, factor the number</h4>
+  <div class="row">
+    <label>n (the modulus) <input id="shor-n" type="number" value="187" min="4" max="20000"></label>
+    <label>a (any base) <input id="shor-a" type="number" value="2" min="2"></label>
+    <button type="button" class="act" id="shor-rand">Random a</button>
+    <button type="button" class="act" id="shor-sweep">How often does a work?</button>
+  </div>
+  <figure style="margin:.9rem 0 .4rem;padding:.6rem .6rem .3rem">
+    <svg id="shor-plot" viewBox="0 0 720 170" role="img" aria-label="The sequence a to the power x, modulo n, plotted for increasing x; points one period apart are marked in the same colour to show the repeat"></svg>
+  </figure>
+  <div class="out" id="shor-out" aria-live="polite"></div>
+  <div class="verdict" id="shor-verdict"></div>
+  <p class="note" id="shor-note"></p>
 </div>
 
 <!-- ============================================================ -->
@@ -743,14 +776,14 @@ svg .white{fill:var(--paper)}
     <text id="cvp-good-2" x="150" y="312" text-anchor="middle" font-size="11" class="dim"></text>
   </g>
   <g transform="translate(380,20)">
-    <text x="150" y="0" text-anchor="middle" font-size="14" font-weight="600">Bad basis: long and skewed — same lattice</text>
+    <text id="cvp-bad-title" x="150" y="0" text-anchor="middle" font-size="14" font-weight="600">Bad basis: long and skewed — same lattice</text>
     <g transform="translate(80,200) scale(1,-1)">
       <g id="lat2"></g>
       <g id="cvp-bad" clip-path="url(#cvp-box)"></g>
-      <path d="M0 0 L100 40" class="rs" stroke-width="3" fill="none" marker-end="url(#mk-r)"/>
-      <path d="M0 0 L60 20" class="rs" stroke-width="3" fill="none" marker-end="url(#mk-r)"/>
+      <path id="cvp-bad-b1" d="M0 0 L100 40" class="rs" stroke-width="3" fill="none" marker-end="url(#mk-r)"/>
+      <path id="cvp-bad-b2" d="M0 0 L60 20" class="rs" stroke-width="3" fill="none" marker-end="url(#mk-r)"/>
     </g>
-    <text x="150" y="272" text-anchor="middle" font-size="11" class="r" font-weight="600">b₁ = (5,2) · b₂ = (3,1)</text>
+    <text id="cvp-bad-basis" x="150" y="272" text-anchor="middle" font-size="11" class="r" font-weight="600">b₁ = (5,2) · b₂ = (3,1)</text>
     <text id="cvp-bad-1" x="150" y="294" text-anchor="middle" font-size="11" class="dim"></text>
     <text id="cvp-bad-2" x="150" y="312" text-anchor="middle" font-size="11" class="dim"></text>
   </g>
@@ -765,6 +798,10 @@ svg .white{fill:var(--paper)}
     <button type="button" class="act" id="cvp-rand">Random target</button>
     <button type="button" class="act" id="cvp-worst">Find a bad miss</button>
     <button type="button" class="act" id="cvp-reset">Back to (2.6, 1.3)</button>
+  </div>
+  <div class="row" style="margin-top:.6rem">
+    <button type="button" class="act" id="cvp-lll">Reduce the bad basis (LLL)</button>
+    <span class="note" id="cvp-lll-note" style="margin:0;align-self:center"></span>
   </div>
   <div class="out" id="cvp-out" aria-live="polite"></div>
   <div class="verdict" id="cvp-verdict"></div>
@@ -1183,6 +1220,18 @@ svg .white{fill:var(--paper)}
 <figcaption>"Implicit rejection": the decapsulator never says no. Compare the CCA2 timeline in lesson 4 — this is the defence against queries made after the target exists.</figcaption>
 </figure>
 
+<div class="play" id="fo-play">
+  <h4>Encapsulate, tamper, get rejected <span class="demo">demo</span></h4>
+  <p class="note" style="margin:0 0 .6rem">The same baby Kyber keys as above, but the randomness is no longer free: it is derived from the message by hashing, so the ciphertext is a <em>function</em> of the message. That is the whole trick — a decapsulator can redo the sender's work and check.</p>
+  <div class="row">
+    <label>message (0–15) <input id="fo-m" type="number" value="11" min="0" max="15"></label>
+    <button type="button" class="act" id="fo-tamper">Tamper with the ciphertext</button>
+    <button type="button" class="act" id="fo-honest">Send it honestly</button>
+  </div>
+  <div id="fo-out" aria-live="polite"></div>
+  <div class="verdict" id="fo-verdict"></div>
+</div>
+
 <figure>
 <svg viewBox="0 0 720 150" role="img" aria-label="Timeline of Kyber changes through the NIST rounds: round 2 dropped public-key compression and changed the noise and NTT domain; round 3 tuned noise and ciphertext compression and adjusted the FO transform; FIPS 203 followed">
   <line x1="40" y1="60" x2="680" y2="60" class="st" stroke-width="2" marker-end="url(#mk-ink)"/>
@@ -1234,6 +1283,25 @@ svg .white{fill:var(--paper)}
 <tr><td>FrodoKEM-976</td><td>976</td><td>3</td><td>AES-192</td><td>15 632 B</td></tr>
 <tr><td>FrodoKEM-1344</td><td>1344</td><td>5</td><td>AES-256</td><td>21 520 B</td></tr>
 </tbody></table></div>
+
+<h3>What that costs on the wire <span class="demo">demo</span></h3>
+<p>Every figure below is the public key size quoted earlier on this page, next to the classical key exchanges being replaced. The classical bars are not small; they are almost invisible, and that is the point.</p>
+
+<div class="play" id="size-play">
+  <h4>Public key size, and what it costs a real server</h4>
+  <figure style="margin:.4rem 0 .6rem;padding:.6rem .6rem .3rem">
+    <svg id="size-chart" viewBox="0 0 720 330" role="img" aria-label="Horizontal bar chart of public key sizes in bytes: X25519 32, NIST P-256 65, RSA-2048 256, Kyber-512 800, Kyber-768 1184, Kyber-1024 1568, FrodoKEM-640 9616, FrodoKEM-976 15632, FrodoKEM-1344 21520"></svg>
+  </figure>
+  <div class="row">
+    <label>handshakes per second <input id="size-rate" type="number" value="5000" min="1" max="10000000"></label>
+    <label>compared with <select id="size-base" style="font:inherit;padding:.4rem .5rem;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink)">
+      <option value="0">X25519 (32 B)</option>
+      <option value="2">RSA-2048 (256 B)</option>
+    </select></label>
+  </div>
+  <div class="out" id="size-out" aria-live="polite"></div>
+  <p class="note" id="size-note"></p>
+</div>
 
 <h3>Keygen, encapsulate, decapsulate</h3>
 <figure>
@@ -1404,6 +1472,18 @@ svg .white{fill:var(--paper)}
 <figcaption>Revealing a preimage proves you held it; hashes aren't reversible, but matching one is proof enough. The key sizes above are recomputed from the construction (the transcript's kilobyte figures don't reconcile).</figcaption>
 </figure>
 
+<div class="play" id="lam-play">
+  <h4>Sign once, fine. Sign twice, forged. <span class="demo">demo</span></h4>
+  <p class="note" style="margin:0 0 .6rem">A four-bit toy of the scheme above, with real SHA-256 underneath: four pairs of secrets, their hashes published as the public key. Signing reveals one secret from each pair — which means every signature is also a partial disclosure of the private key.</p>
+  <div class="row">
+    <label>sign this number <input id="lam-m" type="number" value="11" min="0" max="15"></label>
+    <button type="button" class="act" id="lam-sign">Sign it</button>
+    <button type="button" class="act" id="lam-reset">Fresh key</button>
+  </div>
+  <div id="lam-out" aria-live="polite"></div>
+  <div class="verdict" id="lam-verdict"></div>
+</div>
+
 <h3>SWIFFT: a hash built from the FFT</h3>
 <figure>
 <svg viewBox="0 0 720 120" role="img" aria-label="SWIFFT pipeline: message split into m polynomials, FFT of each, pointwise multiply by fixed coefficients, inverse FFT, sum and output bits">
@@ -1530,7 +1610,7 @@ function txt(id,v){ var n=document.getElementById(id); if(n) n.textContent=v; }
 /* ================= lesson 4: drag the target, solve CVP with two bases ========= */
 (function(){
   var svg=document.getElementById('cvp'); if(!svg) return;
-  var S=20, GOOD=[[1,0],[0,1]], BAD=[[5,2],[3,1]];
+  var S=20, GOOD=[[1,0],[0,1]], BAD0=[[5,2],[3,1]], BAD=[[5,2],[3,1]];
   var gG=document.getElementById('cvp-good'), gB=document.getElementById('cvp-bad');
   var out=document.getElementById('cvp-out'), verdict=document.getElementById('cvp-verdict');
   var t=[2.6,1.3];
@@ -1616,6 +1696,56 @@ function txt(id,v){ var n=document.getElementById(id); if(n) n.textContent=v; }
     setT(best[0],best[1]);
   });
   document.getElementById('cvp-reset').addEventListener('click',function(){ setT(2.6,1.3); });
+
+  /* ---- basis reduction: the attack the lesson names but never shows ---- */
+  var lllBtn=document.getElementById('cvp-lll'), lllNote=document.getElementById('cvp-lll-note');
+  var step=0, finished=false;
+  function n2(v){ return v[0]*v[0]+v[1]*v[1]; }
+  function dotp(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+  function vec(v){ return '('+v[0]+','+v[1]+')'; }
+  function paintBasis(){
+    var p1=document.getElementById('cvp-bad-b1'), p2=document.getElementById('cvp-bad-b2');
+    if(p1) p1.setAttribute('d','M0 0 L'+(BAD[0][0]*S)+' '+(BAD[0][1]*S));
+    if(p2) p2.setAttribute('d','M0 0 L'+(BAD[1][0]*S)+' '+(BAD[1][1]*S));
+    txt('cvp-bad-basis','b₁ = '+vec(BAD[0])+' · b₂ = '+vec(BAD[1]));
+    draw();
+  }
+  function resetBasis(){
+    BAD=[BAD0[0].slice(),BAD0[1].slice()]; step=0; finished=false;
+    lllBtn.textContent='Reduce the bad basis (LLL)';
+    lllNote.textContent='';
+    txt('cvp-bad-title','Bad basis: long and skewed — same lattice');
+    paintBasis();
+  }
+  lllBtn.addEventListener('click',function(){
+    if(finished){ resetBasis(); return; }
+    step++;
+    var msg;
+    if(n2(BAD[0])>n2(BAD[1])){
+      var tmp=BAD[0]; BAD[0]=BAD[1]; BAD[1]=tmp;
+      msg='step '+step+': swap, so b₁ is the shorter one → b₁ = '+vec(BAD[0])+', b₂ = '+vec(BAD[1]);
+    } else {
+      var m=Math.round(dotp(BAD[0],BAD[1])/n2(BAD[0]));
+      if(m===0){
+        // already reduced; normalise the signs so it lands exactly on the good basis
+        if(BAD[0][0]<0||(BAD[0][0]===0&&BAD[0][1]<0)) BAD[0]=[-BAD[0][0],-BAD[0][1]];
+        if(BAD[1][0]<0||(BAD[1][0]===0&&BAD[1][1]<0)) BAD[1]=[-BAD[1][0],-BAD[1][1]];
+        if(n2(BAD[0])>n2(BAD[1])){ var t2=BAD[0]; BAD[0]=BAD[1]; BAD[1]=t2; }
+        finished=true;
+        lllBtn.textContent='Restore the skewed basis';
+        txt('cvp-bad-title','Reduced basis — still the same lattice');
+        lllNote.innerHTML='<strong>Reduced in '+step+' steps</strong> to '+vec(BAD[0])+' and '+vec(BAD[1])+
+          ' — the good basis, recovered from the bad one by arithmetic alone. Drag the target now: this panel agrees with the left every time. In two dimensions reduction is this easy and the "hard" problem is not hard at all; at the dimensions Kyber uses, LLL and BKZ still help but fall exponentially short, and that gap is the whole security argument.';
+        paintBasis();
+        return;
+      }
+      BAD[1]=[BAD[1][0]-m*BAD[0][0], BAD[1][1]-m*BAD[0][1]];
+      msg='step '+step+': subtract '+m+'×b₁ from b₂ → b₂ = '+vec(BAD[1])+' (shorter, and it spans the same lattice)';
+    }
+    lllNote.textContent=msg;
+    paintBasis();
+  });
+
   draw();
 })();
 
@@ -1836,6 +1966,407 @@ function txt(id,v){ var n=document.getElementById(id); if(n) n.textContent=v; }
   },{rootMargin:'-10% 0px -80% 0px'});
   heads.forEach(function(h){ io.observe(h); });
 })();
+
+/* ================= shared: SHA-256, used by the Lamport and FO demos ========= */
+function sha256(msg){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var bytes=[],i;
+  for(i=0;i<msg.length;i++){
+    var c=msg.charCodeAt(i);
+    if(c>=0xD800&&c<=0xDBFF&&i+1<msg.length){
+      var lo=msg.charCodeAt(i+1);
+      if(lo>=0xDC00&&lo<=0xDFFF){ c=0x10000+((c-0xD800)<<10)+(lo-0xDC00); i++; }
+    }
+    if(c<128) bytes.push(c);
+    else if(c<2048) bytes.push(192|c>>6,128|c&63);
+    else if(c<65536) bytes.push(224|c>>12,128|(c>>6)&63,128|c&63);
+    else bytes.push(240|c>>18,128|(c>>12)&63,128|(c>>6)&63,128|c&63);
+  }
+  var bitLen=bytes.length*8;
+  bytes.push(0x80);
+  while(bytes.length%64!==56) bytes.push(0);
+  for(i=7;i>=0;i--) bytes.push((i<4?Math.floor(bitLen/Math.pow(2,8*i)):0)&255);
+  function rotr(x,n){ return (x>>>n)|(x<<(32-n)); }
+  for(var off=0;off<bytes.length;off+=64){
+    var w=new Array(64);
+    for(i=0;i<16;i++) w[i]=(bytes[off+i*4]<<24)|(bytes[off+i*4+1]<<16)|(bytes[off+i*4+2]<<8)|bytes[off+i*4+3];
+    for(i=16;i<64;i++){
+      var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3);
+      var s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)|0;
+    }
+    var a=H[0],b=H[1],c2=H[2],dd=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(i=0;i<64;i++){
+      var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g);
+      var t1=(h+S1+ch+K[i]+w[i])|0;
+      var S0=rotr(a,2)^rotr(a,13)^rotr(a,22), maj=(a&b)^(a&c2)^(b&c2);
+      var t2=(S0+maj)|0;
+      h=g;g=f;f=e;e=(dd+t1)|0;dd=c2;c2=b;b=a;a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c2)|0;H[3]=(H[3]+dd)|0;
+    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out='';
+  for(i=0;i<8;i++) out+=('00000000'+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+
+/* ================= lesson 1: Shor's period finding =========================== */
+(function(){
+  var plot=document.getElementById('shor-plot'); if(!plot) return;
+  var out=document.getElementById('shor-out'), verdict=document.getElementById('shor-verdict'), note=document.getElementById('shor-note');
+  function gcd(a,b){ while(b){ var t=a%b; a=b; b=t; } return a; }
+  function mp(b,e,m){ var r=1; b%=m; while(e>0){ if(e&1) r=r*b%m; b=b*b%m; e=Math.floor(e/2); } return r; }
+  function period(a,n){ var x=a%n, r=1; if(x===1) return 1; while(x!==1){ x=x*a%n; r++; if(r>n) return null; } return r; }
+  function run(){
+    var n=Math.max(4,Math.min(20000,+document.getElementById('shor-n').value||187));
+    var a=Math.max(2,+document.getElementById('shor-a').value||2);
+    if(a>=n){ a=2; document.getElementById('shor-a').value=2; }
+    var g0=gcd(a,n);
+    clear(plot);
+    if(g0>1){
+      out.innerHTML=stat(g0,'gcd(a, n) — already a factor','t')+stat(n/g0,'n ÷ that','t');
+      verdict.className='verdict good';
+      verdict.textContent='You got lucky: a shares a factor with n, so a single gcd factors it and no period is needed. With a 2048-bit n this never happens by chance — that is why the period route exists.';
+      note.textContent='';
+      draw(a,n,null);
+      return;
+    }
+    var r=period(a,n);
+    draw(a,n,r);
+    if(!r){ out.innerHTML=''; verdict.className='verdict bad'; verdict.textContent='No period found below n.'; return; }
+    var half=r/2, h=(r%2===0)?mp(a,half,n):null;
+    var p=h!==null?gcd(h-1,n):0, q=h!==null?gcd(h+1,n):0;
+    if(p>q){ var sw=p; p=q; q=sw; }
+    var win=(r%2===0)&&h!==n-1&&p>1&&p<n;
+    out.innerHTML=stat(r,'period r: the smallest r with a^r ≡ 1')
+      +stat(r%2===0?'even ✓':'odd ✗','is r even?',r%2===0?'t':'r')
+      +(h!==null?stat(h,'a^(r/2) mod n'):'')
+      +(win?stat(p+' × '+q,'gcd(a^(r/2) ∓ 1, n) — the factors','t'):'');
+    verdict.className='verdict '+(win?'good':'bad');
+    verdict.textContent=win
+      ? 'Factored: '+n+' = '+p+' × '+q+'. Every step after finding r was schoolbook arithmetic — one exponentiation and two gcds.'
+      : (r%2 ? 'This a gives an odd period, so a^(r/2) is not an integer and the trick does not apply. Pick another a — that is exactly what Shor’s algorithm does, and it succeeds for at least half of all a.'
+             : 'This a gives a^(r/2) ≡ −1 mod n, so both gcds return 1 and n, telling you nothing. Pick another a; the failure rate is bounded below 1/2.');
+    note.innerHTML='Finding r by walking the sequence took '+r+' multiplication'+(r===1?'':'s')+' here. That cost grows with n, and for a 2048-bit modulus it is hopeless — the sequence is astronomically long. A quantum computer does not walk it: it prepares a superposition over x, and a quantum Fourier transform reads the period off in one shot. <strong>That step, and only that step, is the quantum part.</strong>';
+  }
+  function draw(a,n,r){
+    clear(plot);
+    var W=720,H=170,L=34,R=10,T=14,B=26;
+    var count=r?Math.min(r+2,60):Math.min(n,60);
+    var pts=[],x=1,v=a%n;
+    for(var i=1;i<=count;i++){ pts.push(v); v=v*a%n; }
+    var dx=(W-L-R)/Math.max(count-1,1), sy=(H-T-B)/Math.max(n-1,1);
+    var px=function(i){ return L+i*dx; }, py=function(val){ return H-B-val*sy; };
+    plot.appendChild(el('line',{x1:L,y1:H-B,x2:W-R,y2:H-B,stroke:'var(--rule)','stroke-width':1}));
+    plot.appendChild(el('line',{x1:L,y1:T,x2:L,y2:H-B,stroke:'var(--rule)','stroke-width':1}));
+    var yl=el('text',{x:L-6,y:T+4,'text-anchor':'end','font-size':9,fill:'var(--ink-2)'}); yl.textContent=n; plot.appendChild(yl);
+    var y0=el('text',{x:L-6,y:H-B,'text-anchor':'end','font-size':9,fill:'var(--ink-2)'}); y0.textContent='0'; plot.appendChild(y0);
+    var d='';
+    for(var i2=0;i2<pts.length;i2++) d+=(i2?'L':'M')+px(i2)+' '+py(pts[i2]);
+    plot.appendChild(el('path',{d:d,fill:'none',stroke:'var(--ink-2)','stroke-width':1,opacity:.45}));
+    for(var i3=0;i3<pts.length;i3++){
+      var isRepeat=r&&((i3%r)===0);
+      var c=el('circle',{cx:px(i3),cy:py(pts[i3]),r:isRepeat?4.5:2.6,
+        fill:isRepeat?'var(--violet)':'var(--ink-2)',opacity:isRepeat?1:.6});
+      var ttl=el('title'); ttl.textContent='a^'+(i3+1)+' mod n = '+pts[i3];
+      c.appendChild(ttl); plot.appendChild(c);
+      if(r&&(i3===0||i3===r)){
+        var lab=el('text',{x:px(i3),y:py(pts[i3])-9,'text-anchor':'middle','font-size':10,fill:'var(--violet)','font-weight':600});
+        lab.textContent=pts[i3]; plot.appendChild(lab);
+      }
+    }
+    if(r&&r<count){
+      var yb=H-B+14;
+      plot.appendChild(el('path',{d:'M'+px(0)+' '+yb+' L'+px(r)+' '+yb,stroke:'var(--violet)','stroke-width':1.5,fill:'none'}));
+      plot.appendChild(el('path',{d:'M'+px(0)+' '+(yb-4)+' L'+px(0)+' '+(yb+4),stroke:'var(--violet)','stroke-width':1.5}));
+      plot.appendChild(el('path',{d:'M'+px(r)+' '+(yb-4)+' L'+px(r)+' '+(yb+4),stroke:'var(--violet)','stroke-width':1.5}));
+      var rl=el('text',{x:(px(0)+px(r))/2,y:yb-4,'text-anchor':'middle','font-size':10,fill:'var(--violet)','font-weight':600});
+      rl.textContent='period r = '+r; plot.appendChild(rl);
+    }
+    var cap=el('text',{x:W-R,y:H-6,'text-anchor':'end','font-size':10,fill:'var(--ink-2)'});
+    cap.textContent=r&&r+2>60?('first 60 of '+r+' steps'):('a^x mod n for x = 1…'+count);
+    plot.appendChild(cap);
+  }
+  document.getElementById('shor-rand').addEventListener('click',function(){
+    var n=+document.getElementById('shor-n').value||187, a;
+    var guard=0;
+    do { a=2+Math.floor(Math.random()*(n-3)); guard++; } while(guard<50 && (function(x){var b=n,t;while(b){t=x%b;x=b;b=t;}return x;})(a)!==1);
+    document.getElementById('shor-a').value=a; run();
+  });
+  document.getElementById('shor-sweep').addEventListener('click',function(){
+    var n=Math.max(4,Math.min(20000,+document.getElementById('shor-n').value||187));
+    var ok=0,tot=0;
+    for(var a=2;a<n&&tot<400;a++){
+      var g=(function(x,y){var t;while(y){t=x%y;x=y;y=t;}return x;})(a,n);
+      if(g!==1) continue;
+      tot++;
+      var r=period(a,n);
+      if(r&&r%2===0&&mp(a,r/2,n)!==n-1) ok++;
+    }
+    note.innerHTML='Of the first '+tot+' bases coprime to '+n+', <strong>'+ok+'</strong> ('+Math.round(100*ok/tot)+'%) give an even period that factors n. Shor’s algorithm just retries with a new random a until one works — the bound is that at least half succeed, so a handful of attempts is enough.';
+  });
+  ['shor-n','shor-a'].forEach(function(id){ document.getElementById(id).addEventListener('input',run); });
+  run();
+})();
+
+/* ================= lesson 1: Grover ========================================== */
+(function(){
+  var out=document.getElementById('grover-out'); if(!out) return;
+  var note=document.getElementById('grover-note');
+  function pow10(bits){ return bits*Math.log10(2); }          // 2^bits as a power of ten
+  function big(x){                                            // keep huge multiples readable
+    if(x<1000) return x.toFixed(1);
+    var e=Math.floor(Math.log10(x));
+    return (x/Math.pow(10,e)).toFixed(1)+'×10^'+e;
+  }
+  function human(sec){
+    if(sec<1) return 'under a second';
+    if(sec<3600) return Math.round(sec)+' seconds';
+    if(sec<86400) return (sec/3600).toFixed(1)+' hours';
+    if(sec<3.15e7) return (sec/86400).toFixed(1)+' days';
+    var yr=sec/3.15e7;
+    if(yr<1e6) return Math.round(yr).toLocaleString()+' years';
+    if(yr<1.4e10) return (yr/1e6).toFixed(1)+' million years';
+    return big(yr/1.4e10)+'× the age of the universe';
+  }
+  function run(){
+    var k=+document.getElementById('grover-k').value, rl=+document.getElementById('grover-r').value;
+    document.getElementById('grover-klab').textContent=k;
+    document.getElementById('grover-rlab').textContent=rl;
+    var rate=Math.pow(10,rl);
+    var classicalOps=pow10(k-1), groverOps=pow10(k/2)+Math.log10(Math.PI/4);
+    var groverSec=Math.pow(10,groverOps-rl);
+    out.innerHTML=stat('10^'+classicalOps.toFixed(0),'classical: ~2^'+(k-1)+' guesses')
+      +stat('10^'+groverOps.toFixed(0),'Grover: ~(π/4)·2^'+(k/2)+' iterations')
+      +stat(k/2+' bits','effective security left',k/2>=128?'t':(k/2>=96?'':'r'))
+      +stat(human(groverSec),'at 10^'+rl+' iterations/s',groverSec>3.15e9?'t':'r');
+    note.innerHTML='Grover halves the exponent, it does not collapse it — a 256-bit key still has 128 bits of security, which is why CNSA 2.0 simply mandates AES-256 and moves on. '+
+      'Two caveats the raw number hides: those iterations are <strong>inherently serial</strong>, so a thousand quantum computers give you a thousand separate searches rather than a thousandfold speed-up (unlike classical brute force, which parallelises perfectly); '+
+      'and 10^'+rl+' iterations per second is a choice you just made with that slider, not a known quantity — no machine today performs even one such iteration on AES.';
+  }
+  document.getElementById('grover-k').addEventListener('input',run);
+  document.getElementById('grover-r').addEventListener('input',run);
+  run();
+})();
+
+/* ================= lesson 6: the FO transform, end to end ==================== */
+(function(){
+  var out=document.getElementById('fo-out'); if(!out) return;
+  var verdict=document.getElementById('fo-verdict'), q=17, n=4;
+  function mul(a,b){ var r=[0,0,0,0];
+    for(var i=0;i<n;i++) for(var j=0;j<n;j++){ var k=i+j,c=a[i]*b[j]; if(k>=n){ k-=n; c=-c; } r[k]=(r[k]+c)%q; }
+    return r.map(function(x){ return ((x%q)+q)%q; }); }
+  function add(a,b){ return a.map(function(x,i){ return ((x+b[i])%q+q)%q; }); }
+  function sub(a,b){ return a.map(function(x,i){ return ((x-b[i])%q+q)%q; }); }
+  var A=[[[11,16,16,6],[3,6,4,9]],[[1,10,3,5],[15,9,1,6]]];
+  var s=[[0,1,16,16],[0,16,0,16]], t=[[7,1,14,16],[5,12,12,10]];
+  function derive(m,c,tag){
+    var h=sha256('kyber:'+m+':'+c+':'+tag), o=[];
+    for(var i=0;i<n;i++){ var v=parseInt(h.charAt(i*2),16); o.push(v<3?16:(v<6?1:0)); }
+    return o;
+  }
+  function randomness(m,c){
+    return { r:[derive(m,c,'r0'),derive(m,c,'r1')], e1:[derive(m,c,'e10'),derive(m,c,'e11')], e2:derive(m,c,'e2') };
+  }
+  function enc(num,nz){
+    var msg=[0,1,2,3].map(function(i){ return ((num>>i)&1)*9; });
+    var u=[0,1].map(function(i){ return add(add(mul(A[0][i],nz.r[0]),mul(A[1][i],nz.r[1])),nz.e1[i]); });
+    var v=add(add(add(mul(t[0],nz.r[0]),mul(t[1],nz.r[1])),nz.e2),msg);
+    return {u:u,v:v};
+  }
+  function dec(c){
+    var noisy=sub(c.v,add(mul(s[0],c.u[0]),mul(s[1],c.u[1])));
+    return noisy.map(function(x){ return Math.abs(x-9)<Math.min(x,q-x)?1:0; }).reduce(function(a,b,i){ return a+(b<<i); },0);
+  }
+  // the counter a real implementation never needs: baby Kyber's noise budget is so
+  // small that some hash-derived randomness fails to decrypt. Cached per message.
+  var ctr={};
+  function counterFor(m){
+    if(ctr[m]!==undefined) return ctr[m];
+    for(var c=0;c<200;c++){ if(dec(enc(m,randomness(m,c)))===m){ ctr[m]=c; return c; } }
+    ctr[m]=0; return 0;
+  }
+  function ct2str(c){ return '(['+c.u[0].join(',')+'], ['+c.u[1].join(',')+'], ['+c.v.join(',')+'])'; }
+  function same(a,b){ return ct2str(a)===ct2str(b); }
+  function show(m,received,tampered){
+    var m2=dec(received);
+    var reenc=enc(m2,randomness(m2,counterFor(m2)));
+    var ok=same(reenc,received);
+    out.innerHTML=
+      '<p class="poly"><b>1. sender</b> r, e₁, e₂ ← H('+m+') — no free randomness left</p>'+
+      '<p class="poly"><b>2. ciphertext</b> c = '+ct2str(enc(m,randomness(m,counterFor(m))))+'</p>'+
+      (tampered?'<p class="poly" style="color:var(--red)"><b>⚡ in transit</b> one coefficient of v changed → '+ct2str(received)+'</p>':'')+
+      '<p class="poly"><b>3. receiver decrypts</b> → m′ = '+m2+(m2===m?'':' (different from '+m+')')+'</p>'+
+      '<p class="poly"><b>4. receiver re-derives</b> r′, e₁′, e₂′ ← H(m′) and re-encrypts → '+ct2str(reenc)+'</p>'+
+      '<p class="poly"><b>5. compare</b> with what actually arrived: '+(ok?'identical':'different')+'</p>';
+    verdict.className='verdict '+(ok?'good':'bad');
+    verdict.textContent=ok
+      ? 'Accepted. The shared key is K = H(m′ ‖ c). Because the randomness came from the message, there was exactly one legal ciphertext for m — and this is it.'
+      : 'Rejected. The receiver cannot rebuild this ciphertext from anything it decrypts to, so it was not produced honestly. A real KEM returns a pseudorandom key derived from a secret seed instead of an error — "implicit rejection" — so an attacker cannot even learn that the check failed. Without this step the scheme is CPA-secure only: an attacker could nudge ciphertexts and learn from the answers.';
+  }
+  function honest(){
+    var m=Math.max(0,Math.min(15,+document.getElementById('fo-m').value||0));
+    show(m,enc(m,randomness(m,counterFor(m))),false);
+  }
+  document.getElementById('fo-honest').addEventListener('click',honest);
+  document.getElementById('fo-m').addEventListener('input',honest);
+  document.getElementById('fo-tamper').addEventListener('click',function(){
+    var m=Math.max(0,Math.min(15,+document.getElementById('fo-m').value||0));
+    var c=enc(m,randomness(m,counterFor(m)));
+    var bad={u:[c.u[0].slice(),c.u[1].slice()],v:c.v.slice()};
+    var pos=Math.floor(Math.random()*4), delta=1+Math.floor(Math.random()*(q-1));
+    bad.v[pos]=(bad.v[pos]+delta)%q;
+    show(m,bad,true);
+  });
+  honest();
+})();
+
+/* ================= lesson 8: Lamport, signed twice =========================== */
+(function(){
+  var out=document.getElementById('lam-out'); if(!out) return;
+  var verdict=document.getElementById('lam-verdict');
+  var key=null, used=[];
+  function bits(m){ return [3,2,1,0].map(function(i){ return (m>>i)&1; }); }   // shown MSB first
+  function keygen(seed){
+    var sk=[],pk=[];
+    for(var i=0;i<4;i++){
+      var pair=[sha256(seed+':'+i+':0').slice(0,12), sha256(seed+':'+i+':1').slice(0,12)];
+      sk.push(pair); pk.push([sha256(pair[0]).slice(0,12), sha256(pair[1]).slice(0,12)]);
+    }
+    return {sk:sk,pk:pk};
+  }
+  function fresh(){
+    key=keygen('seed'+Math.floor(Math.random()*1e9)); used=[]; render();
+  }
+  function known(){                                  // which halves the world has seen
+    var k=[{},{},{},{}];
+    used.forEach(function(m){ bits(m).forEach(function(b,i){ k[i][b]=true; }); });
+    return k;
+  }
+  function forgeable(){
+    var k=known(), list=[];
+    for(var m=0;m<16;m++) if(bits(m).every(function(b,i){ return k[i][b]; })) list.push(m);
+    return list;
+  }
+  function render(sig,m){
+    var k=known();
+    var rows='<p class="poly"><b>public key</b> — published once, four pairs of hashes</p>';
+    for(var i=0;i<4;i++){
+      var seen0=k[i][0]?' <span style="color:var(--red)">← secret revealed</span>':'';
+      var seen1=k[i][1]?' <span style="color:var(--red)">← secret revealed</span>':'';
+      rows+='<p class="poly">bit '+(3-i)+':  0 → '+key.pk[i][0]+'…'+seen0+'<br>'+
+            '<span style="padding-left:3.6rem">1 → '+key.pk[i][1]+'…'+seen1+'</span></p>';
+    }
+    if(sig){
+      rows+='<p class="poly" style="margin-top:.5rem"><b>signature on '+m+'</b> = '+bits(m).join('')+'₂ — one secret per bit</p>'+
+            '<p class="poly">'+sig.map(function(v,i){ return v+'…'; }).join('   ')+'</p>'+
+            '<p class="poly">verifier hashes each and matches the published pair: <span style="color:var(--teal)">valid ✓</span></p>';
+    }
+    out.innerHTML=rows;
+    var f=forgeable();
+    if(used.length===0){
+      verdict.className='verdict good';
+      verdict.textContent='Nothing signed yet. The private key is 8 secrets; the public key is their 8 hashes.';
+    } else if(used.length===1){
+      verdict.className='verdict good';
+      verdict.textContent='Signed '+used[0]+'. Half the private key is now public, but every message other than '+used[0]+' needs at least one secret nobody has seen — so nothing else can be forged yet. Signing anything different will change that.';
+    } else {
+      var d=f.length;
+      verdict.className='verdict '+(d>1?'bad':'good');
+      verdict.textContent='Signed '+used.join(' and ')+'. Those signatures leaked both halves of '+Math.round(Math.log(d)/Math.log(2))+' pair(s), so an attacker who saw them can now sign '+d+' of the 16 messages without the private key — '+
+        (d>1?'including ones you never approved: '+f.filter(function(x){ return used.indexOf(x)<0; }).join(', ')+'.':'only the ones you already signed.')+
+        ' This is why the scheme is called one-time, and why SPHINCS+/SLH-DSA spends its whole design budget on never reusing a key.';
+    }
+  }
+  document.getElementById('lam-sign').addEventListener('click',function(){
+    var m=Math.max(0,Math.min(15,+document.getElementById('lam-m').value||0));
+    var sig=bits(m).map(function(b,i){ return key.sk[i][b]; });
+    if(used.indexOf(m)<0) used.push(m);
+    render(sig,m);
+  });
+  document.getElementById('lam-reset').addEventListener('click',fresh);
+  fresh();
+})();
+
+/* ================= lesson 7: what post-quantum costs on the wire ============= */
+(function(){
+  var svg=document.getElementById('size-chart'); if(!svg) return;
+  var out=document.getElementById('size-out'), note=document.getElementById('size-note');
+  // every figure is the public key size quoted in this page's own tables
+  var DATA=[
+    {name:'X25519',        bytes:32,    pq:false},
+    {name:'NIST P-256',    bytes:65,    pq:false},
+    {name:'RSA-2048',      bytes:256,   pq:false},
+    {name:'Kyber-512',     bytes:800,   pq:true},
+    {name:'Kyber-768',     bytes:1184,  pq:true},
+    {name:'Kyber-1024',    bytes:1568,  pq:true},
+    {name:'FrodoKEM-640',  bytes:9616,  pq:true},
+    {name:'FrodoKEM-976',  bytes:15632, pq:true},
+    {name:'FrodoKEM-1344', bytes:21520, pq:true}
+  ];
+  function draw(baseIdx){
+    clear(svg);
+    var W=720,L=152,R=110,T=44,rowH=28,barH=14;   // R leaves room for the value and ×N labels
+    var max=21520, scale=(W-L-R)/max;
+    // legend — two categories, so identity is never colour alone: every bar is labelled too
+    [['classical','var(--violet)',L],['post-quantum','var(--teal)',L+108]].forEach(function(g){
+      svg.appendChild(el('rect',{x:g[2],y:14,width:10,height:10,rx:2,fill:g[1]}));
+      var tx=el('text',{x:g[2]+16,y:23,'font-size':11,fill:'var(--ink-2)'}); tx.textContent=g[0]; svg.appendChild(tx);
+    });
+    [0,5000,10000,15000,20000].forEach(function(v){
+      var x=L+v*scale;
+      svg.appendChild(el('line',{x1:x,y1:T-6,x2:x,y2:T+DATA.length*rowH-8,stroke:'var(--rule)','stroke-width':1,opacity:v?.55:1}));
+      var lab=el('text',{x:x,y:T+DATA.length*rowH+8,'text-anchor':'middle','font-size':9,fill:'var(--ink-2)'});
+      lab.textContent=v?(v/1000)+'k':'0'; svg.appendChild(lab);
+    });
+    DATA.forEach(function(d,i){
+      var y=T+i*rowH, w=Math.max(2,d.bytes*scale);
+      var nm=el('text',{x:L-10,y:y+barH-2,'text-anchor':'end','font-size':11,
+                        fill:i===baseIdx?'var(--ink)':'var(--ink-2)','font-weight':i===baseIdx?600:400});
+      nm.textContent=d.name; svg.appendChild(nm);
+      var bar=el('rect',{x:L,y:y,width:w,height:barH,rx:4,fill:d.pq?'var(--teal)':'var(--violet)'});
+      var ttl=el('title'); ttl.textContent=d.name+': '+d.bytes.toLocaleString()+' bytes';
+      bar.appendChild(ttl); svg.appendChild(bar);
+      var val=el('text',{x:L+w+7,y:y+barH-2,'font-size':11,fill:'var(--ink-2)'});
+      val.textContent=d.bytes.toLocaleString()+' B';
+      svg.appendChild(val);
+      if(i!==baseIdx&&DATA[baseIdx]){
+        var mult=el('text',{x:W-6,y:y+barH-2,'text-anchor':'end','font-size':10,fill:'var(--ink-2)',opacity:.8});
+        mult.textContent='×'+Math.round(d.bytes/DATA[baseIdx].bytes);
+        svg.appendChild(mult);
+      }
+    });
+  }
+  function run(){
+    var baseIdx=+document.getElementById('size-base').value;
+    var rate=Math.max(1,Math.min(1e7,+document.getElementById('size-rate').value||1));
+    draw(baseIdx);
+    var base=DATA[baseIdx];
+    function perDay(d){ return (d.bytes-base.bytes)*rate*86400; }
+    function gb(b){ return b>=1e12?(b/1e12).toFixed(1)+' TB':(b>=1e9?(b/1e9).toFixed(1)+' GB':(b/1e6).toFixed(1)+' MB'); }
+    var k=DATA[4], f=DATA[8];
+    out.innerHTML=stat('+'+(k.bytes-base.bytes).toLocaleString()+' B','Kyber-768 vs '+base.name+', per handshake')
+      +stat(gb(perDay(k)),'extra per day at that rate','t')
+      +stat('+'+(f.bytes-base.bytes).toLocaleString()+' B','FrodoKEM-1344 vs '+base.name)
+      +stat(gb(perDay(f)),'extra per day at that rate','r');
+    note.innerHTML='Public keys only — a real handshake also carries the ciphertext, which for Kyber is another 768–1 568 B. '+
+      'This is the practical argument the course keeps returning to: Kyber is a few hundred bytes more than an elliptic curve and nobody notices, while FrodoKEM asks for '+
+      Math.round(f.bytes/DATA[0].bytes)+'× X25519 and buys you the removal of ring structure. Whether that structure is a risk worth paying for is the open question — FrodoKEM exists because some governments decided it was.';
+  }
+  document.getElementById('size-rate').addEventListener('input',run);
+  document.getElementById('size-base').addEventListener('change',run);
+  run();
+})();
+
 })();
 </script>
 </body>
